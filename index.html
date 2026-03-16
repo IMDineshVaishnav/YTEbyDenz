@@ -40,7 +40,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 .add-pt-btn:hover{border-color:var(--accent);color:var(--accent)}
 
 /* tiles */
-.tiles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tiles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media(min-width:420px){.tiles-grid{grid-template-columns:repeat(5,1fr)}}
 .tile{border-radius:10px;border:2px solid var(--border);cursor:pointer;overflow:hidden;transition:all .2s;aspect-ratio:9/16;position:relative;background:#0a0a0a}
 .tile.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.3)}
 .tile canvas{width:100%;height:100%;display:block}
@@ -90,15 +90,31 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 .saved-badge.show{display:inline-flex}
 
 /* ══ RECORDER ══ */
-#recScreen{display:none;flex-direction:column;align-items:center;width:100vw;min-height:100vh}
-#previewWrap{width:100%;max-width:420px;aspect-ratio:9/16;position:relative;background:#000;flex-shrink:0;overflow:hidden}
+#recScreen{
+  display:none;flex-direction:column;align-items:center;
+  width:100vw;height:100vh;overflow:hidden;position:fixed;top:0;left:0;
+  background:var(--bg);z-index:50;
+}
+#previewWrap{
+  width:100%;max-width:420px;
+  flex:1;min-height:0;
+  position:relative;background:#000;overflow:hidden;
+}
 #camVideo{position:absolute;top:0;left:0;width:100%;height:33.33%;object-fit:cover}
 #overlayCanvas{display:block;width:100%;height:100%;position:absolute;top:0;left:0}
+#previewWrap canvas,#previewWrap video{max-width:100%;max-height:100%;}
 #recDot{position:absolute;top:10px;left:10px;width:10px;height:10px;border-radius:50%;background:var(--red);z-index:20;display:none;animation:blink 1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
 
-/* ══ CONTROL BAR ══ */
-#controlBar{width:100%;max-width:420px;background:#0a0a0a;border-top:1px solid var(--border);padding:10px 12px;display:flex;flex-direction:column;gap:9px}
+/* ══ CONTROL BAR — sticky bottom, never scrolls ══ */
+#controlBar{
+  width:100%;max-width:420px;
+  background:#0a0a0a;
+  border-top:1px solid var(--border);
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:8px;
+  flex-shrink:0;
+}
 .ctrl-top{display:flex;align-items:center;gap:8px}
 .ctrl-status{flex:1;font-size:11px;color:var(--muted)}
 .rec-label{display:inline-flex;align-items:center;gap:5px;color:var(--red);font-weight:600}
@@ -166,7 +182,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 .tbtn2.dl{background:var(--accent);color:#fff}
 .tbtn2.close{background:#1a1a1a;color:var(--muted)}
 
-@media(max-width:480px){#previewWrap,#controlBar{max-width:100vw}}
+@media(max-width:480px){#previewWrap,#controlBar{max-width:100vw}#recScreen{height:100dvh}}
 </style>
 </head>
 <body>
@@ -260,6 +276,33 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
     <video id="camVideo" autoplay playsinline muted></video>
     <canvas id="overlayCanvas"></canvas>
     <div id="recDot"></div>
+    <!-- Tap zones — invisible, sit over the infographic area only (bottom 2/3) -->
+    <div id="tapLeft"  onclick="handleTapZone('left')"  style="
+      position:absolute;left:0;top:33.33%;width:50%;height:66.67%;
+      z-index:10;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+    ">
+      <div id="tapLeftFeedback" style="
+        width:80px;height:80px;border-radius:50%;
+        background:rgba(255,255,255,0.12);
+        display:none;align-items:center;justify-content:center;
+        font-size:28px;color:rgba(255,255,255,0.7);
+        pointer-events:none;
+      ">‹</div>
+    </div>
+    <div id="tapRight" onclick="handleTapZone('right')" style="
+      position:absolute;right:0;top:33.33%;width:50%;height:66.67%;
+      z-index:10;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+    ">
+      <div id="tapRightFeedback" style="
+        width:80px;height:80px;border-radius:50%;
+        background:rgba(255,255,255,0.12);
+        display:none;align-items:center;justify-content:center;
+        font-size:28px;color:rgba(255,255,255,0.7);
+        pointer-events:none;
+      ">›</div>
+    </div>
   </div>
   <div id="controlBar">
     <!-- top row: status + audio + rec -->
@@ -384,6 +427,7 @@ const TEMPLATES=[
   {id:'checklist',name:'Checklist'},{id:'neon',name:'Neon Border'},
   {id:'timeline',name:'Timeline'},{id:'minimal',name:'Minimal Type'},
   {id:'cards',name:'Stat Cards'},{id:'bold',name:'Bold Ticker'},
+  {id:'compare',name:'Comparison'},{id:'claude',name:'Claude Theme'},
 ];
 
 // ══ BG THEMES ══
@@ -666,6 +710,35 @@ function drawThemeMini(ctx,tid,x,y,w,h){
       ctx.fillStyle=acc;ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(labels[i],cx2+cw2/2,cy2+ch2/2);
     });
+  } else if(tid==='compare'){
+    ctx.fillStyle=UC.bg;ctx.fillRect(x,y,w,h);
+    const MID2=x+w/2;
+    ctx.fillStyle=hexAlpha('#ef4444',.15);ctx.fillRect(x,y,w/2,h);
+    ctx.fillStyle=hexAlpha('#22c55e',.15);ctx.fillRect(MID2,y,w/2,h);
+    ctx.strokeStyle=hexAlpha('#fff',.1);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(MID2,y);ctx.lineTo(MID2,y+h);ctx.stroke();
+    ctx.fillStyle='#ef4444';ctx.font='bold 5px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText('BEFORE',x+w/4,y+6);
+    ctx.fillStyle='#22c55e';ctx.fillText('AFTER',MID2+w/4,y+6);
+    [1,2,3].forEach((r,i)=>{
+      ctx.strokeStyle=hexAlpha('#fff',.06);ctx.lineWidth=.5;
+      ctx.beginPath();ctx.moveTo(x,y+22+i*18);ctx.lineTo(x+w,y+22+i*18);ctx.stroke();
+      ctx.fillStyle='#ef4444';ctx.font='7px sans-serif';ctx.textAlign='left';
+      ctx.fillText('✕',x+4,y+24+i*18);
+      ctx.fillStyle='#22c55e';ctx.fillText('✓',MID2+4,y+24+i*18);
+    });
+  } else if(tid==='claude'){
+    ctx.fillStyle='#0d0d14';ctx.fillRect(x,y,w,h);
+    for(let ci=0;ci<3;ci++){ctx.save();ctx.globalAlpha=.05;ctx.beginPath();ctx.arc(x+w*0.3+ci*w*.25,y+h*.5,18+ci*8,0,Math.PI*2);ctx.fillStyle='#cc785c';ctx.fill();ctx.restore();}
+    ctx.fillStyle=hexAlpha('#cc785c',.12);rr(ctx,x+pad,y+4,w-pad*2,12,6);ctx.fill();
+    ctx.beginPath();ctx.arc(x+pad+8,y+10,5,0,Math.PI*2);ctx.fillStyle='#cc785c';ctx.fill();
+    pts.forEach((p,i)=>{
+      const py=y+20+i*20;
+      ctx.fillStyle=i===0?hexAlpha('#cc785c',.15):'#17171f';rr(ctx,x+pad,py,w-pad*2,16,4);ctx.fill();
+      ctx.fillStyle=i===0?'#cc785c':hexAlpha('#cc785c',.4);ctx.fillRect(x+pad,py,4,16);
+      ctx.fillStyle='#e8e0d5';ctx.font=(i===0?'bold ':'')+'5px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(p.b.slice(0,14),x+pad+8,py+5);
+    });
   } else {
     ctx.fillStyle='#0a0a0a';ctx.fillRect(x,y,w,h);
     ctx.fillStyle=acc;ctx.fillRect(x,y,4,h);
@@ -724,7 +797,7 @@ async function initRecorder(){
   bgIntensityMult=parseInt(document.getElementById('bgIntensity').value)/100;
   try{
     mediaStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:true
+      video:{facingMode:currentFacingMode,width:{ideal:1920},height:{ideal:1080}},audio:true
     });
     const vid=document.getElementById('camVideo');
     vid.srcObject=mediaStream;
@@ -733,6 +806,34 @@ async function initRecorder(){
     await vid.play();
     const canvas=document.getElementById('overlayCanvas');
     canvas.width=CW;canvas.height=CH;
+
+    // ── Tap zones on infographic area ──
+    // Right half tap = next, Left half tap = prev
+    // Only fires in bottom 2/3 (infographic area), not on face
+    canvas.addEventListener('click', e=>{
+      const rect  = canvas.getBoundingClientRect();
+      const relY  = (e.clientY - rect.top) / rect.height;
+      const relX  = (e.clientX - rect.left) / rect.width;
+      // only respond to taps in infographic zone (below top 33%)
+      if(relY < 0.36) return;
+      if(relX > 0.5) movePoint(1);
+      else           movePoint(-1);
+      // show tap ripple feedback
+      showTapRipple(e.clientX, e.clientY, relX > 0.5);
+    });
+
+    // Touch support
+    canvas.addEventListener('touchend', e=>{
+      e.preventDefault();
+      const t    = e.changedTouches[0];
+      const rect = canvas.getBoundingClientRect();
+      const relY = (t.clientY - rect.top) / rect.height;
+      const relX = (t.clientX - rect.left) / rect.width;
+      if(relY < 0.36) return;
+      if(relX > 0.5) movePoint(1);
+      else           movePoint(-1);
+      showTapRipple(t.clientX, t.clientY, relX > 0.5);
+    }, {passive:false});
     buildStepPills();
     setupAudioMeter();
     setupPrompter();
@@ -801,7 +902,6 @@ function setupPrompter(){
   panel.style.display='block';
 }
 function scrollPrompterTo(pointIdx){
-  // highlight current section in prompter
   const el=document.getElementById('prompterText');
   if(!el||pointIdx>=C.pts.length) return;
   const bolds=el.querySelectorAll('b');
@@ -810,7 +910,11 @@ function scrollPrompterTo(pointIdx){
     b.style.background=i===pointIdx?'rgba(245,158,11,0.15)':'transparent';
     b.style.borderRadius='4px';
     b.style.padding=i===pointIdx?'0 4px':'0';
-    if(i===pointIdx){b.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    if(i===pointIdx){
+      // only scroll inside the prompter panel itself, not the page
+      const panel=document.getElementById('prompterPanel');
+      if(panel) b.scrollIntoView({behavior:'smooth',block:'nearest',boundary:panel});
+    }
   });
 }
 
@@ -842,6 +946,9 @@ function drawLoop(ts){
     ctx.restore();
   }
 
+  // ── Face frame overlay ──
+  drawFaceFrame(ctx, ts);
+
   // countdown timer in video
   if(recording&&document.getElementById('tTimer').checked){
     const elapsed=Math.floor((Date.now()-recStart)/1000);
@@ -872,6 +979,11 @@ function drawLoop(ts){
     if(ctaAutoHide&&(performance.now()-ctaShownAt)>4000)toggleCTA();
     else drawCTA(ctx,ts);
   }
+
+  // tap ripples
+  drawTapRipples(ctx);
+  // zone hint
+  drawZoneHint(ctx);
 
   // rec dot
   if(recording&&Math.sin(Date.now()/280)>0){
@@ -993,10 +1105,192 @@ function drawBgConstellation(ctx){
 }
 
 // ══════════════════════════════════════════════
+// TAP RIPPLE FEEDBACK
+// ══════════════════════════════════════════════
+const tapRipples = [];
+function showTapRipple(x, y, isNext){
+  tapRipples.push({
+    x, y, r:0, maxR:60, alpha:0.7,
+    color: isNext ? UC.accent : UC.muted,
+    label: isNext ? '▶' : '◀',
+    isNext
+  });
+  // flash the button briefly
+  const btn = document.getElementById(isNext?'nextBtn':'prevBtn');
+  if(btn){ btn.style.transform='scale(0.92)'; setTimeout(()=>btn.style.transform='',150); }
+}
+function drawTapRipples(ctx){
+  for(let i=tapRipples.length-1;i>=0;i--){
+    const rp = tapRipples[i];
+    rp.r     += 4;
+    rp.alpha -= 0.045;
+    if(rp.alpha <= 0){ tapRipples.splice(i,1); continue; }
+    const rect = document.getElementById('overlayCanvas').getBoundingClientRect();
+    const canX = (rp.x - rect.left) * (CW / rect.width);
+    const canY = (rp.y - rect.top)  * (CH / rect.height);
+    ctx.save();
+    ctx.globalAlpha = rp.alpha;
+    ctx.strokeStyle = rp.color;
+    ctx.lineWidth   = 3;
+    ctx.beginPath(); ctx.arc(canX, canY, rp.r, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = rp.alpha * 0.5;
+    ctx.font = 'bold 28px sans-serif';
+    ctx.fillStyle = rp.color;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(rp.label, canX, canY);
+    ctx.restore();
+  }
+}
+
+// ── Zone hint — shown briefly when recording starts ──
+let zoneHintAlpha = 0, zoneHintTimer = 0;
+function showZoneHint(){ zoneHintAlpha = 0.7; zoneHintTimer = 120; }
+function drawZoneHint(ctx){
+  if(zoneHintAlpha <= 0) return;
+  zoneHintTimer--;
+  if(zoneHintTimer < 30) zoneHintAlpha -= 0.022;
+  const midX = CW/2, zY = INFO_Y + INFO_H*0.5;
+  ctx.save();
+  ctx.globalAlpha = zoneHintAlpha * 0.22;
+  // left zone
+  ctx.fillStyle = UC.muted;
+  ctx.fillRect(0, INFO_Y, midX, INFO_H);
+  // right zone
+  ctx.fillStyle = UC.accent;
+  ctx.fillRect(midX, INFO_Y, midX, INFO_H);
+  ctx.globalAlpha = zoneHintAlpha * 0.85;
+  // divider line
+  ctx.strokeStyle = hexAlpha('#fff', 0.3); ctx.lineWidth = 2;
+  ctx.setLineDash([12,8]);
+  ctx.beginPath(); ctx.moveTo(midX, INFO_Y+40); ctx.lineTo(midX, INFO_Y+INFO_H-40); ctx.stroke();
+  ctx.setLineDash([]);
+  // left label
+  ctx.font = 'bold 38px sans-serif';
+  ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('◀ PREV', midX*0.5, zY);
+  // right label
+  ctx.fillStyle = '#fff';
+  ctx.fillText('NEXT ▶', midX + midX*0.5, zY);
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════
+// FACE FRAME
+// ══════════════════════════════════════════════
+let faceFrameT = 0;
+function drawFaceFrame(ctx, ts){
+  faceFrameT += 0.025;
+  const acc   = UC.accent;
+  const W     = CW, H = CAM_H;
+  const PAD   = 18;
+  const R     = 28; // corner radius
+
+  // ── Pulsing border — always synced to current theme accent ──
+  // When recording: accent color at full opacity with stronger pulse
+  // When idle: accent color at low opacity, gentle pulse
+  const pulse     = 0.7 + Math.sin(faceFrameT * 1.4) * 0.3;
+  const frameCol  = acc; // always theme accent — never hardcoded
+  const recAlpha  = pulse * 0.92;
+  const idleAlpha = pulse * 0.32;
+
+  ctx.save();
+  ctx.globalAlpha = recording ? recAlpha : idleAlpha;
+  ctx.strokeStyle = frameCol;
+  ctx.lineWidth   = recording ? 6 : 3;
+  // dashed border when idle, solid when recording
+  if(!recording) ctx.setLineDash([20,14]);
+  rr(ctx, PAD, PAD, W - PAD*2, H - PAD*2, R);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // corner accents — L-shaped brackets, theme color
+  const CL = 60;
+  ctx.strokeStyle = frameCol;
+  ctx.lineWidth   = recording ? 8 : 5;
+  ctx.globalAlpha = recording ? 1 : 0.65;
+  ctx.lineCap     = 'round';
+  // top-left
+  ctx.beginPath(); ctx.moveTo(PAD+R+CL,PAD); ctx.lineTo(PAD+R,PAD); ctx.arcTo(PAD,PAD,PAD,PAD+R,R); ctx.lineTo(PAD,PAD+R+CL); ctx.stroke();
+  // top-right
+  ctx.beginPath(); ctx.moveTo(W-PAD-R-CL,PAD); ctx.lineTo(W-PAD-R,PAD); ctx.arcTo(W-PAD,PAD,W-PAD,PAD+R,R); ctx.lineTo(W-PAD,PAD+R+CL); ctx.stroke();
+  // bottom-left
+  ctx.beginPath(); ctx.moveTo(PAD,H-PAD-R-CL); ctx.lineTo(PAD,H-PAD-R); ctx.arcTo(PAD,H-PAD,PAD+R,H-PAD,R); ctx.lineTo(PAD+R+CL,H-PAD); ctx.stroke();
+  // bottom-right
+  ctx.beginPath(); ctx.moveTo(W-PAD,H-PAD-R-CL); ctx.lineTo(W-PAD,H-PAD-R); ctx.arcTo(W-PAD,H-PAD,W-PAD-R,H-PAD,R); ctx.lineTo(W-PAD-R-CL,H-PAD); ctx.stroke();
+
+  ctx.restore();
+
+  // ── Progress arc — theme-synced, shown always (dimmer when not recording) ──
+  {
+    const elapsed  = recording ? (Date.now() - recStart) / 1000 : 0;
+    const pct      = Math.min(1, elapsed / 60);
+    const arcCX    = W / 2;
+    const arcCY    = H - 14;
+    const arcR     = W * 0.42;
+    const startA   = Math.PI;
+    const remain   = Math.max(0, 60 - Math.floor(elapsed));
+    // color: use accent early, gold mid, red near end — all blended with accent hue
+    const arcColor = pct > 0.83 ? '#ef4444' : pct > 0.67 ? '#F59E0B' : acc;
+
+    // track — always visible, very faint
+    ctx.save();
+    ctx.globalAlpha = recording ? 0.22 : 0.1;
+    ctx.strokeStyle = acc;
+    ctx.lineWidth   = 4;
+    ctx.beginPath(); ctx.arc(arcCX, arcCY, arcR, startA, startA + Math.PI); ctx.stroke();
+
+    // fill — only when recording
+    if(recording && pct > 0){
+      ctx.globalAlpha = 0.88;
+      ctx.strokeStyle = arcColor;
+      ctx.lineWidth   = 4;
+      ctx.lineCap     = 'round';
+      ctx.beginPath(); ctx.arc(arcCX, arcCY, arcR, startA, startA + pct * Math.PI); ctx.stroke();
+    }
+    ctx.restore();
+
+    // time label — only when recording
+    if(recording){
+      ctx.save();
+      ctx.globalAlpha = 0.88;
+      ctx.font = 'bold 26px sans-serif';
+      ctx.fillStyle = arcColor;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(remain + 's', W/2, H - 4);
+      ctx.restore();
+    }
+  }
+
+  // ── Persistent subtle tap zone arrows on infographic edges ──
+  // Left edge — prev arrow
+  const arrPulse = 0.4 + Math.sin(faceFrameT * 1.2) * 0.2;
+  ctx.save();
+  ctx.globalAlpha = arrPulse * (curPoint > 0 ? 0.55 : 0.15);
+  ctx.fillStyle = UC.muted;
+  ctx.beginPath();
+  ctx.moveTo(28, INFO_Y + INFO_H*0.5);
+  ctx.lineTo(58, INFO_Y + INFO_H*0.5 - 28);
+  ctx.lineTo(58, INFO_Y + INFO_H*0.5 + 28);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // Right edge — next arrow
+  ctx.save();
+  ctx.globalAlpha = arrPulse * (curPoint < totalPoints-1 ? 0.65 : 0.15);
+  ctx.fillStyle = UC.accent;
+  ctx.beginPath();
+  ctx.moveTo(CW-28, INFO_Y + INFO_H*0.5);
+  ctx.lineTo(CW-58, INFO_Y + INFO_H*0.5 - 28);
+  ctx.lineTo(CW-58, INFO_Y + INFO_H*0.5 + 28);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════
 // THEMES — FULL DRAW
 // ══════════════════════════════════════════════
 function drawThemeFull(ctx){
-  const m={glass:drawGlass,split:drawSplit,checklist:drawChecklist,neon:drawNeon,timeline:drawTimeline,minimal:drawMinimal,cards:drawCards,bold:drawBoldTicker};
+  const m={glass:drawGlass,split:drawSplit,checklist:drawChecklist,neon:drawNeon,timeline:drawTimeline,minimal:drawMinimal,cards:drawCards,bold:drawBoldTicker,compare:drawCompare,claude:drawClaude};
   (m[themeId]||drawGlass)(ctx);
 }
 
@@ -1168,6 +1462,162 @@ function drawBoldTicker(ctx){
 }
 
 // ══════════════════════════════════════════════
+// COMPARISON THEME
+// ══════════════════════════════════════════════
+function drawCompare(ctx){
+  rr(ctx,0,INFO_Y,CW,INFO_H,0); ctx.fillStyle=UC.bg; ctx.fill();
+  drawBackground(ctx);
+
+  const n    = Math.min(C.pts.length, 4);
+  const LCOL = '#ef4444';  // left — bad / before
+  const RCOL = '#22c55e';  // right — good / after
+  const MID  = CW/2;
+
+  // header
+  const hdrH = 90;
+  rr(ctx,0,INFO_Y,MID,hdrH,0);   ctx.fillStyle=hexAlpha(LCOL,.15); ctx.fill();
+  rr(ctx,MID,INFO_Y,MID,hdrH,0); ctx.fillStyle=hexAlpha(RCOL,.15); ctx.fill();
+  // divider line
+  ctx.strokeStyle=hexAlpha('#fff',.1); ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(MID,INFO_Y); ctx.lineTo(MID,INFO_Y+INFO_H); ctx.stroke();
+
+  // column headers
+  txt(ctx, C.pts[0]?.b||'Approach A', MID/2,  INFO_Y+22, 32, LCOL,'700','center');
+  txt(ctx, C.pts[1]?.b||'Approach B', MID+MID/2, INFO_Y+22, 32, RCOL,'700','center');
+  txt(ctx, C.pts[0]?.s||'Old way',    MID/2,  INFO_Y+58, 22, hexAlpha(LCOL,.6),'400','center');
+  txt(ctx, C.pts[1]?.s||'Better way', MID+MID/2, INFO_Y+58, 22, hexAlpha(RCOL,.6),'400','center');
+
+  // comparison rows
+  const rowH  = Math.floor((INFO_H - hdrH - 80) / Math.max(n-2,1));
+  const rows  = C.pts.slice(2);
+  rows.forEach((row,i)=>{
+    const op = ptOpacity[i+2]; if(op<=0) return;
+    ctx.save(); ctx.globalAlpha = op;
+    const ry = INFO_Y + hdrH + i*rowH;
+    const isActive = (i+2)===curPoint;
+
+    // row bg
+    if(isActive){
+      ctx.fillStyle=hexAlpha(LCOL,.06); ctx.fillRect(0,ry,MID,rowH);
+      ctx.fillStyle=hexAlpha(RCOL,.06); ctx.fillRect(MID,ry,MID,rowH);
+    }
+    // separator
+    ctx.strokeStyle=hexAlpha('#fff',.05); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,ry+rowH); ctx.lineTo(CW,ry+rowH); ctx.stroke();
+
+    // left side — bad
+    const badPts  = row.b.split('|');
+    const goodPts = row.s.split('|');
+    const leftTxt  = badPts[0]  || row.b;
+    const rightTxt = goodPts[0] || row.s;
+
+    // X icon left
+    ctx.strokeStyle=LCOL; ctx.lineWidth=3; ctx.lineCap='round';
+    const ix=P+20, iy=ry+rowH/2;
+    ctx.beginPath(); ctx.moveTo(ix-10,iy-10); ctx.lineTo(ix+10,iy+10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ix+10,iy-10); ctx.lineTo(ix-10,iy+10); ctx.stroke();
+    txt(ctx,leftTxt,  P+50,  ry+rowH/2-18, 28, hexAlpha('#fff',.8),'500','left', MID-P-60);
+
+    // checkmark icon right
+    ctx.strokeStyle=RCOL; ctx.lineWidth=3; ctx.lineCap='round'; ctx.lineJoin='round';
+    const cx3=MID+P+20;
+    ctx.beginPath(); ctx.moveTo(cx3-10,ry+rowH/2); ctx.lineTo(cx3-2,ry+rowH/2+10); ctx.lineTo(cx3+14,ry+rowH/2-12); ctx.stroke();
+    txt(ctx,rightTxt, MID+P+50, ry+rowH/2-18, 28, hexAlpha('#fff',.8),'500','left', MID-P-60);
+
+    ctx.restore();
+  });
+
+  // first two points revealed as column labels (already shown above)
+  // show them with opacity animation
+  if(ptOpacity[0]>0){
+    ctx.save(); ctx.globalAlpha=ptOpacity[0];
+    // already drawn above
+    ctx.restore();
+  }
+
+  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,(curPoint+1)/C.pts.length,hexAlpha('#fff',.1),UC.accent,0);
+  txt(ctx,C.handle,CW-P,INFO_Y+INFO_H-26,22,hexAlpha(UC.muted,.4),'400','right');
+}
+
+// ══════════════════════════════════════════════
+// CLAUDE THEME
+// ══════════════════════════════════════════════
+function drawClaude(ctx){
+  // Claude color palette: deep slate bg, coral/salmon accent, clean white
+  const CBG  = '#0d0d14';
+  const CACC = '#cc785c'; // Claude coral
+  const CLT  = '#e8e0d5'; // Claude cream text
+  const CMUT = '#6b6560'; // Claude muted
+  const CARD2= '#17171f';
+
+  rr(ctx,0,INFO_Y,CW,INFO_H,0); ctx.fillStyle=CBG; ctx.fill();
+
+  // ── Animated background: floating organic shapes ──
+  const shapeT = faceFrameT * 0.4;
+  for(let i=0;i<5;i++){
+    const sx = CW*0.15 + i*(CW*0.18) + Math.sin(shapeT+i*1.3)*40;
+    const sy = INFO_Y + INFO_H*0.3 + i*120 + Math.cos(shapeT*0.7+i)*60;
+    const sr = 80 + Math.sin(shapeT+i)*20;
+    ctx.save();
+    ctx.globalAlpha = 0.04 + Math.sin(shapeT+i)*0.015;
+    ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2);
+    ctx.fillStyle=CACC; ctx.fill();
+    ctx.restore();
+  }
+  // thin horizontal scan line
+  const scanY = INFO_Y + ((faceFrameT*8)%(INFO_H)) ;
+  ctx.save(); ctx.globalAlpha=0.04;
+  ctx.strokeStyle=CACC; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,scanY); ctx.lineTo(CW,scanY); ctx.stroke();
+  ctx.restore();
+
+  // ── Topic pill ──
+  rr(ctx,P,INFO_Y+44,CW-P*2,60,30);
+  ctx.fillStyle=hexAlpha(CACC,.1); ctx.fill();
+  ctx.strokeStyle=hexAlpha(CACC,.25); ctx.lineWidth=1.5; ctx.stroke();
+  // Claude logo-ish dot
+  ctx.beginPath(); ctx.arc(P+34,INFO_Y+74,14,0,Math.PI*2);
+  ctx.fillStyle=CACC; ctx.fill();
+  ctx.fillStyle=CBG; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('C',P+34,INFO_Y+74);
+  txt(ctx,C.pill,P+62,INFO_Y+58,28,CLT,'500','left',CW-P*2-80);
+
+  // ── Points ──
+  const n=C.pts.length, cardH=Math.min(130,Math.floor((INFO_H-200)/n));
+  const startY=INFO_Y+130;
+  for(let i=0;i<n;i++){
+    const op=ptOpacity[i]; if(op<=0) continue;
+    ctx.save(); ctx.globalAlpha=op;
+    const py=startY+i*(cardH+12), isActive=i===curPoint;
+
+    // card
+    rr(ctx,P,py,CW-P*2,cardH,16);
+    ctx.fillStyle=isActive?hexAlpha(CACC,.12):CARD2; ctx.fill();
+    ctx.strokeStyle=isActive?hexAlpha(CACC,.5):hexAlpha('#fff',.05);
+    ctx.lineWidth=isActive?2:1; ctx.stroke();
+
+    // left accent stripe
+    rr(ctx,P,py,6,cardH,3);
+    ctx.fillStyle=isActive?CACC:hexAlpha(CACC,.3); ctx.fill();
+
+    // number
+    ctx.fillStyle=isActive?CACC:hexAlpha(CACC,.4);
+    ctx.font=`bold ${isActive?36:28}px sans-serif`; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('0'+(i+1), P+20, py+cardH/2-(isActive?18:14));
+
+    // text
+    txt(ctx,C.pts[i].b,P+76,py+16,isActive?34:28,isActive?CLT:hexAlpha(CLT,.65),'600','left',CW-P*2-90);
+    txt(ctx,C.pts[i].s,P+76,py+60,22,CMUT,'400','left',CW-P*2-90);
+
+    ctx.restore();
+  }
+
+  // progress
+  progBar(ctx,P,INFO_Y+INFO_H-52,CW-P*2,5,(curPoint+1)/n,hexAlpha(CACC,.15),CACC,3);
+  txt(ctx,C.handle,CW-P,INFO_Y+INFO_H-28,22,hexAlpha(CMUT,.6),'400','right');
+}
+
+// ══════════════════════════════════════════════
 // CTA OVERLAY
 // ══════════════════════════════════════════════
 function toggleCTA(){
@@ -1177,38 +1627,88 @@ function toggleCTA(){
   if(btn){btn.classList.toggle('active',ctaActive);btn.textContent=ctaActive?'Hide CTA':'CTA Ring';}
 }
 function drawCTA(ctx,ts){
-  pulseT+=.035;ringT+=.02;
+  pulseT+=.035; ringT+=.02;
   const acc=UC.accent,bg=UC.bg,textC=UC.text,mut=UC.muted;
-  const elapsed=(ts-ctaStartTime)/1000;
-  const slideIn=Math.min(1,elapsed/.35);
+  const elapsed=(performance.now()-ctaShownAt)/1000;
+  const slideIn=Math.min(1,elapsed/.4);
   const eased=1-Math.pow(1-slideIn,3);
-  const offsetY=(1-eased)*140;
-  const CARD_H=340,CARD_Y=CH-CARD_H-44,CARD_X=40,CARD_W=CW-80;
-  ctx.fillStyle=hexAlpha('#000',.52);ctx.fillRect(0,CH*.60,CW,CH*.40);
-  ctx.save();ctx.translate(0,offsetY);
-  rr(ctx,CARD_X,CARD_Y,CARD_W,CARD_H,40);ctx.fillStyle=hexAlpha(bg,.97);ctx.fill();
-  ctx.strokeStyle=hexAlpha(acc,.28);ctx.lineWidth=2;ctx.stroke();
-  rr(ctx,CARD_X+44,CARD_Y+32,8,36,4);ctx.fillStyle=acc;ctx.fill();
-  txt(ctx,'Agar helpful laga toh —',CARD_X+68,CARD_Y+30,26,hexAlpha(textC,.45),'400','left');
-  txt(ctx,'Yeh teen kaam karo',CARD_X+68,CARD_Y+62,36,textC,'700','left');
-  const chips=[{label:'Like',sub:'Pasand aaya?',icon:drawThumbIcon},{label:'Subscribe',sub:'Miss mat karo',icon:drawSubIcon},{label:'Comment',sub:'Batao neeche',icon:drawCommentIcon}];
-  const chipW=Math.floor((CARD_W-80)/3),chipH=170,chipY=CARD_Y+120,gap=20;
+  const offsetY=(1-eased)*180;
+
+  // ── Exact dimensions ──
+  const CARD_H=220, CARD_Y=CH-CARD_H-20;
+  const CARD_X=30, CARD_W=CW-60;
+
+  ctx.save(); ctx.translate(0,offsetY);
+
+  // dim only bottom portion
+  ctx.fillStyle=hexAlpha('#000',.5);
+  ctx.fillRect(0,CH*0.72,CW,CH*0.28);
+
+  // card
+  rr(ctx,CARD_X,CARD_Y,CARD_W,CARD_H,32);
+  ctx.fillStyle=hexAlpha(bg,.96); ctx.fill();
+  ctx.strokeStyle=hexAlpha(acc,.3); ctx.lineWidth=2; ctx.stroke();
+
+  // header
+  rr(ctx,CARD_X+32,CARD_Y+22,10,40,5); ctx.fillStyle=acc; ctx.fill();
+  txt(ctx,'Agar helpful laga —',CARD_X+56,CARD_Y+20,24,hexAlpha(textC,.45),'400','left');
+  txt(ctx,'Yeh zaroor karo',CARD_X+56,CARD_Y+48,32,textC,'700','left');
+
+  // 3 chips side by side
+  const chips=[
+    {label:'Like',      sub:'👍 Pasand aaya?', icon:drawThumbIcon  },
+    {label:'Subscribe', sub:'🔔 Miss mat karo', icon:drawSubIcon    },
+    {label:'Comment',   sub:'💬 Batao neeche',  icon:drawCommentIcon},
+  ];
+  const chipW=Math.floor((CARD_W-60)/3), chipH=108, chipY=CARD_Y+90, gap=14;
+
   chips.forEach((chip,i)=>{
-    const chipX=CARD_X+20+i*(chipW+gap),cx2=chipX+chipW/2,cy2=chipY+58,isMid=i===1,phase=pulseT+i*2.1;
-    rr(ctx,chipX,chipY,chipW,chipH,22);ctx.fillStyle=isMid?hexAlpha(acc,.17):hexAlpha(acc,.06);ctx.fill();
-    ctx.strokeStyle=isMid?hexAlpha(acc,.65):hexAlpha(acc,.18);ctx.lineWidth=isMid?2.5:1.5;ctx.stroke();
-    const glowGrd=ctx.createRadialGradient(cx2,cy2,6,cx2,cy2,62);glowGrd.addColorStop(0,hexAlpha(acc,.28));glowGrd.addColorStop(1,hexAlpha(acc,0));ctx.beginPath();ctx.arc(cx2,cy2,62,0,Math.PI*2);ctx.fillStyle=glowGrd;ctx.fill();
-    const r1=34+Math.sin(phase*.9)*3;ctx.save();ctx.translate(cx2,cy2);ctx.rotate(ringT*(i%2===0?1:-1)+i*1.1);ctx.strokeStyle=acc;ctx.lineWidth=3.5;ctx.globalAlpha=.88;ctx.setLineDash([16,9]);ctx.beginPath();ctx.arc(0,0,r1,0,Math.PI*2);ctx.stroke();ctx.restore();
-    const r2=46+Math.sin(phase*.7)*3;ctx.save();ctx.translate(cx2,cy2);ctx.rotate(-ringT*.6+i*.6);ctx.strokeStyle=hexAlpha(acc,.38);ctx.lineWidth=2;ctx.globalAlpha=.55;ctx.setLineDash([10,14]);ctx.beginPath();ctx.arc(0,0,r2,0,Math.PI*2);ctx.stroke();ctx.restore();
-    ctx.setLineDash([]);ctx.globalAlpha=1;
-    const da=ringT*2.8+i*2.4;ctx.beginPath();ctx.arc(cx2+Math.cos(da)*r1,cy2+Math.sin(da)*r1,7,0,Math.PI*2);ctx.fillStyle=acc;ctx.fill();
-    ctx.save();ctx.translate(cx2,cy2);ctx.globalAlpha=.95;chip.icon(ctx,isMid?acc:hexAlpha(acc,.75));ctx.restore();
-    txt(ctx,chip.label,cx2,chipY+chipH-72,28,isMid?acc:textC,'700','center');
-    txt(ctx,chip.sub,cx2,chipY+chipH-36,21,mut,'400','center');
-    if(isMid){const bp=.88+Math.sin(pulseT*1.6)*.12;ctx.save();ctx.globalAlpha=bp;rr(ctx,cx2-76,chipY-30,152,38,19);ctx.fillStyle=acc;ctx.fill();txt(ctx,'Most important',cx2,chipY-24,21,bg,'700','center');ctx.restore();}
+    const chipX=CARD_X+16+i*(chipW+gap);
+    const cx2=chipX+chipW/2, cy2=chipY+40;
+    const isMid=i===1, phase=pulseT+i*2.1;
+
+    // chip bg
+    rr(ctx,chipX,chipY,chipW,chipH,18);
+    ctx.fillStyle=isMid?hexAlpha(acc,.18):hexAlpha(acc,.07); ctx.fill();
+    ctx.strokeStyle=isMid?hexAlpha(acc,.7):hexAlpha(acc,.2);
+    ctx.lineWidth=isMid?2.5:1.5; ctx.stroke();
+
+    // spinning ring
+    const r1=28+Math.sin(phase*.9)*2;
+    ctx.save(); ctx.translate(cx2,cy2);
+    ctx.rotate(ringT*(i%2===0?1:-1)+i*1.1);
+    ctx.strokeStyle=acc; ctx.lineWidth=3; ctx.globalAlpha=.85;
+    ctx.setLineDash([12,8]); ctx.beginPath(); ctx.arc(0,0,r1,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+
+    // orbiting dot
+    const da=ringT*2.8+i*2.4;
+    ctx.beginPath(); ctx.arc(cx2+Math.cos(da)*r1,cy2+Math.sin(da)*r1,5,0,Math.PI*2);
+    ctx.fillStyle=acc; ctx.globalAlpha=1; ctx.fill();
+
+    ctx.setLineDash([]); ctx.globalAlpha=1;
+
+    // icon
+    ctx.save(); ctx.translate(cx2,cy2); ctx.scale(0.7,0.7);
+    chip.icon(ctx,isMid?acc:hexAlpha(acc,.8));
+    ctx.restore();
+
+    // label + sub
+    txt(ctx,chip.label,cx2,chipY+chipH-52,26,isMid?acc:textC,'700','center');
+    txt(ctx,chip.sub,  cx2,chipY+chipH-22,18,mut,'400','center');
+
+    // "Most important" on subscribe
+    if(isMid){
+      const bp=.85+Math.sin(pulseT*1.6)*.15;
+      ctx.save(); ctx.globalAlpha=bp;
+      rr(ctx,cx2-64,chipY-26,128,32,16); ctx.fillStyle=acc; ctx.fill();
+      txt(ctx,'Most important',cx2,chipY-20,18,bg,'700','center');
+      ctx.restore();
+    }
   });
   ctx.restore();
 }
+
 function drawThumbIcon(ctx,color){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-16,14);ctx.lineTo(-16,-2);ctx.lineTo(-4,-20);ctx.arcTo(14,-24,16,-8,10);ctx.lineTo(20,-8);ctx.arcTo(24,-8,24,14,6);ctx.lineTo(22,14);ctx.arcTo(22,20,14,20,6);ctx.lineTo(-10,20);ctx.arcTo(-16,20,-16,14,6);ctx.closePath();ctx.fill();}
 function drawSubIcon(ctx,color){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(0,-24);ctx.bezierCurveTo(14,-24,22,-14,22,2);ctx.lineTo(24,16);ctx.lineTo(-24,16);ctx.lineTo(-22,2);ctx.bezierCurveTo(-22,-14,-14,-24,0,-24);ctx.closePath();ctx.fill();ctx.beginPath();ctx.arc(0,20,8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(0,20,5,0,Math.PI*2);ctx.fillStyle=UC.bg;ctx.fill();}
 function drawCommentIcon(ctx,color){ctx.fillStyle=color;rr(ctx,-22,-20,44,34,8);ctx.fill();ctx.beginPath();ctx.moveTo(-8,14);ctx.lineTo(-16,26);ctx.lineTo(6,14);ctx.closePath();ctx.fill();ctx.fillStyle=UC.bg;ctx.fillRect(-14,-12,28,5);ctx.fillRect(-14,0,18,5);}
@@ -1242,13 +1742,76 @@ function updateNavUI(){
 // ══════════════════════════════════════════════
 // CONTROLS
 // ══════════════════════════════════════════════
-function toggleFlip(){
-  camMirrored=!camMirrored;
-  const vid=document.getElementById('camVideo');
-  vid.style.transform=camMirrored?'scaleX(-1)':'scaleX(1)';
-  const btn=document.getElementById('flipBtn');
-  btn.classList.toggle('flip-on',!camMirrored);
-  btn.textContent=camMirrored?'Flip Cam':'Flip On';
+// track which camera is active
+let currentFacingMode = 'user'; // 'user' = front, 'environment' = rear
+
+async function toggleFlip(){
+  const btn = document.getElementById('flipBtn');
+  btn.textContent = 'Switching…';
+  btn.disabled = true;
+
+  // Check if device has multiple cameras
+  let hasMultipleCams = false;
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoCams = devices.filter(d => d.kind === 'videoinput');
+    hasMultipleCams = videoCams.length > 1;
+  } catch(e) {}
+
+  if(hasMultipleCams){
+    // Toggle between front and rear camera
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+
+    // Stop current video tracks
+    if(mediaStream){
+      mediaStream.getVideoTracks().forEach(t => t.stop());
+    }
+
+    try {
+      // Get new video stream with switched camera
+      const newVideoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: currentFacingMode, width:{ideal:1920}, height:{ideal:1080} },
+        audio: false
+      });
+
+      // Replace video track in mediaStream
+      const newVideoTrack = newVideoStream.getVideoTracks()[0];
+      const oldVideoTrack = mediaStream.getVideoTracks()[0];
+      if(oldVideoTrack) mediaStream.removeTrack(oldVideoTrack);
+      mediaStream.addTrack(newVideoTrack);
+
+      // Update video element
+      const vid = document.getElementById('camVideo');
+      vid.srcObject = null;
+      vid.srcObject = mediaStream;
+      await vid.play();
+
+      // Mirror front camera, don't mirror rear
+      camMirrored = currentFacingMode === 'user';
+      vid.style.transform = camMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+
+      btn.classList.toggle('flip-on', currentFacingMode === 'environment');
+      btn.textContent = currentFacingMode === 'user' ? 'Flip Cam' : 'Rear Cam';
+
+    } catch(e) {
+      // Fallback to just mirror flip if camera switch fails
+      camMirrored = !camMirrored;
+      const vid = document.getElementById('camVideo');
+      vid.style.transform = camMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      btn.textContent = camMirrored ? 'Flip Cam' : 'Flip On';
+      currentFacingMode = 'user';
+    }
+
+  } else {
+    // Desktop or single camera — just mirror flip
+    camMirrored = !camMirrored;
+    const vid = document.getElementById('camVideo');
+    vid.style.transform = camMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    btn.classList.toggle('flip-on', !camMirrored);
+    btn.textContent = camMirrored ? 'Flip Cam' : 'Mirrored';
+  }
+
+  btn.disabled = false;
 }
 function toggleBgVis(){
   bgVisible=!bgVisible;
@@ -1277,6 +1840,8 @@ function startRec(){
   document.getElementById('recBtn').textContent='STOP';
   document.getElementById('recBtn').className='rec-btn stop';
   document.getElementById('ctrlStatus').innerHTML='<span class="rec-label"><span class="rdot"></span> REC <span id="recTimer">0:00</span></span>';
+  // show tap zone hint briefly at start
+  showZoneHint();
 }
 function updateTimer(){
   const s=Math.floor((Date.now()-recStart)/1000);
@@ -1359,6 +1924,25 @@ function downloadThumb(){
   const canvas=document.getElementById('thumbCanvas');
   const a=document.createElement('a');a.href=canvas.toDataURL('image/png');
   a.download='thumbnail-'+new Date().toISOString().slice(0,10)+'.png';a.click();
+}
+
+// ══════════════════════════════════════════════
+// TAP ZONES
+// ══════════════════════════════════════════════
+let tapFeedbackTimer = null;
+function handleTapZone(side){
+  const dir   = side === 'right' ? 1 : -1;
+  const fbId  = side === 'right' ? 'tapRightFeedback' : 'tapLeftFeedback';
+  const fb    = document.getElementById(fbId);
+
+  // flash feedback circle
+  if(fb){
+    fb.style.display = 'flex';
+    clearTimeout(tapFeedbackTimer);
+    tapFeedbackTimer = setTimeout(()=>{ fb.style.display='none'; }, 300);
+  }
+
+  movePoint(dir);
 }
 
 // ══════════════════════════════════════════════
