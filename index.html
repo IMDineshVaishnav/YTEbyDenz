@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Finance Short Recorder v4</title>
+<title>Finance Short Recorder v4.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -266,6 +266,13 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
     </div>
   </div>
 
+  <div class="scard">
+    <h2>Face Frame Style</h2>
+    <div class="bg-grid" id="frameGrid"></div>
+  </div>
+  <!-- Frame Style Picker -->
+
+
   <button class="start-btn" id="startBtn" onclick="initRecorder()">Allow Camera & Start Recording</button>
   <div class="perm-note">Browser will ask for <b>camera + microphone</b> access.<br>Everything stays on your device — nothing is uploaded.</div>
 </div>
@@ -426,7 +433,7 @@ function autoSave(){
       handle:document.getElementById('sHandle')?.value,
       script:document.getElementById('sScript')?.value,
       pts:pointRows,
-      themeId,bgThemeId,
+      themeId,bgThemeId,frameStyle,frameStyle,
       bgIntensity:document.getElementById('bgIntensity')?.value,
       uc:{
         bg:document.getElementById('cBg')?.value,
@@ -456,6 +463,8 @@ function restoreSession(){
     if(d.pts&&d.pts.length) pointRows=d.pts;
     if(d.themeId) themeId=d.themeId;
     if(d.bgThemeId) bgThemeId=d.bgThemeId;
+    if(d.frameStyle) frameStyle=d.frameStyle;
+    if(d.frameStyle) frameStyle=d.frameStyle;
     if(d.bgIntensity){
       document.getElementById('bgIntensity').value=d.bgIntensity;
       document.getElementById('bgIntVal').textContent=d.bgIntensity+'%';
@@ -923,6 +932,9 @@ function drawLoop(ts){
   // ── Face frame overlay ──
   drawFaceFrame(ctx, ts);
 
+  // face frame overlay
+  drawFaceFrame(ctx);
+
   // countdown timer in video
   if(recording&&document.getElementById('tTimer').checked){
     const elapsed=Math.floor((Date.now()-recStart)/1000);
@@ -1085,114 +1097,6 @@ function drawBgConstellation(ctx){
 // ══════════════════════════════════════════════
 // FACE FRAME
 // ══════════════════════════════════════════════
-let faceFrameT = 0;
-function drawFaceFrame(ctx, ts){
-  faceFrameT += 0.025;
-  const acc   = UC.accent;
-  const W     = CW, H = CAM_H;
-  const PAD   = 18;
-  const R     = 28; // corner radius
-
-  // ── Pulsing border — always synced to current theme accent ──
-  // When recording: accent color at full opacity with stronger pulse
-  // When idle: accent color at low opacity, gentle pulse
-  const pulse     = 0.7 + Math.sin(faceFrameT * 1.4) * 0.3;
-  const frameCol  = acc; // always theme accent — never hardcoded
-  const recAlpha  = pulse * 0.92;
-  const idleAlpha = pulse * 0.32;
-
-  ctx.save();
-  ctx.globalAlpha = recording ? recAlpha : idleAlpha;
-  ctx.strokeStyle = frameCol;
-  ctx.lineWidth   = recording ? 6 : 3;
-  // dashed border when idle, solid when recording
-  if(!recording) ctx.setLineDash([20,14]);
-  rr(ctx, PAD, PAD, W - PAD*2, H - PAD*2, R);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // corner accents — L-shaped brackets, theme color
-  const CL = 60;
-  ctx.strokeStyle = frameCol;
-  ctx.lineWidth   = recording ? 8 : 5;
-  ctx.globalAlpha = recording ? 1 : 0.65;
-  ctx.lineCap     = 'round';
-  // top-left
-  ctx.beginPath(); ctx.moveTo(PAD+R+CL,PAD); ctx.lineTo(PAD+R,PAD); ctx.arcTo(PAD,PAD,PAD,PAD+R,R); ctx.lineTo(PAD,PAD+R+CL); ctx.stroke();
-  // top-right
-  ctx.beginPath(); ctx.moveTo(W-PAD-R-CL,PAD); ctx.lineTo(W-PAD-R,PAD); ctx.arcTo(W-PAD,PAD,W-PAD,PAD+R,R); ctx.lineTo(W-PAD,PAD+R+CL); ctx.stroke();
-  // bottom-left
-  ctx.beginPath(); ctx.moveTo(PAD,H-PAD-R-CL); ctx.lineTo(PAD,H-PAD-R); ctx.arcTo(PAD,H-PAD,PAD+R,H-PAD,R); ctx.lineTo(PAD+R+CL,H-PAD); ctx.stroke();
-  // bottom-right
-  ctx.beginPath(); ctx.moveTo(W-PAD,H-PAD-R-CL); ctx.lineTo(W-PAD,H-PAD-R); ctx.arcTo(W-PAD,H-PAD,W-PAD-R,H-PAD,R); ctx.lineTo(W-PAD-R-CL,H-PAD); ctx.stroke();
-
-  ctx.restore();
-
-  // ── Progress arc — theme-synced, shown always (dimmer when not recording) ──
-  {
-    const elapsed  = recording ? (Date.now() - recStart) / 1000 : 0;
-    const pct      = Math.min(1, elapsed / 60);
-    const arcCX    = W / 2;
-    const arcCY    = H - 14;
-    const arcR     = W * 0.42;
-    const startA   = Math.PI;
-    const remain   = Math.max(0, 60 - Math.floor(elapsed));
-    // color: use accent early, gold mid, red near end — all blended with accent hue
-    const arcColor = pct > 0.83 ? '#ef4444' : pct > 0.67 ? '#F59E0B' : acc;
-
-    // track — always visible, very faint
-    ctx.save();
-    ctx.globalAlpha = recording ? 0.22 : 0.1;
-    ctx.strokeStyle = acc;
-    ctx.lineWidth   = 4;
-    ctx.beginPath(); ctx.arc(arcCX, arcCY, arcR, startA, startA + Math.PI); ctx.stroke();
-
-    // fill — only when recording
-    if(recording && pct > 0){
-      ctx.globalAlpha = 0.88;
-      ctx.strokeStyle = arcColor;
-      ctx.lineWidth   = 4;
-      ctx.lineCap     = 'round';
-      ctx.beginPath(); ctx.arc(arcCX, arcCY, arcR, startA, startA + pct * Math.PI); ctx.stroke();
-    }
-    ctx.restore();
-
-    // time label — only when recording
-    if(recording){
-      ctx.save();
-      ctx.globalAlpha = 0.88;
-      ctx.font = 'bold 26px sans-serif';
-      ctx.fillStyle = arcColor;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText(remain + 's', W/2, H - 4);
-      ctx.restore();
-    }
-  }
-
-  // ── Persistent subtle tap zone arrows on infographic edges ──
-  // Left edge — prev arrow
-  const arrPulse = 0.4 + Math.sin(faceFrameT * 1.2) * 0.2;
-  ctx.save();
-  ctx.globalAlpha = arrPulse * (curPoint > 0 ? 0.55 : 0.15);
-  ctx.fillStyle = UC.muted;
-  ctx.beginPath();
-  ctx.moveTo(28, INFO_Y + INFO_H*0.5);
-  ctx.lineTo(58, INFO_Y + INFO_H*0.5 - 28);
-  ctx.lineTo(58, INFO_Y + INFO_H*0.5 + 28);
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-
-  // Right edge — next arrow
-  ctx.save();
-  ctx.globalAlpha = arrPulse * (curPoint < totalPoints-1 ? 0.65 : 0.15);
-  ctx.fillStyle = UC.accent;
-  ctx.beginPath();
-  ctx.moveTo(CW-28, INFO_Y + INFO_H*0.5);
-  ctx.lineTo(CW-58, INFO_Y + INFO_H*0.5 - 28);
-  ctx.lineTo(CW-58, INFO_Y + INFO_H*0.5 + 28);
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
 
 // ══════════════════════════════════════════════
 // THEMES — FULL DRAW
@@ -1652,6 +1556,10 @@ function updateNavUI(){
 // ══════════════════════════════════════════════
 // track which camera is active
 let currentFacingMode = 'user'; // 'user' = front, 'environment' = rear
+let frameStyle = 'corner'; // corner | scanner | pulse | neon | film
+let faceFrameT = 0;
+let scanLineY  = 0;
+let filmFlicker= 0;
 
 async function toggleFlip(){
   const btn = document.getElementById('flipBtn');
@@ -1854,6 +1762,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='f'||e.key==='F')toggleFlip();
 });
 
+
+// ══════════════════════════════════════════════
+
 // ══════════════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════════════
@@ -1862,6 +1773,250 @@ renderPointsList();
 buildTiles();
 buildBgPicker();
 buildPresets();
+buildFramePicker();
+
+// ══════════════════════════════════════════════
+// FRAME SYSTEM
+// ══════════════════════════════════════════════
+
+const FRAME_OPTIONS=[
+  {id:'corner', name:'Corner', icon:'⌐',desc:'L-brackets'},
+  {id:'scanner',name:'Scanner',icon:'⊕',desc:'Targeting'},
+  {id:'pulse',  name:'Pulse',  icon:'◎',desc:'Rings'},
+  {id:'neon',   name:'Neon',   icon:'▣',desc:'Glow'},
+  {id:'film',   name:'Film',   icon:'🎬',desc:'Cinematic'},
+];
+
+function buildFramePicker(){
+  const grid=document.getElementById('frameGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  FRAME_OPTIONS.forEach(f=>{
+    const btn=document.createElement('button');
+    btn.className='bg-btn'+(f.id===frameStyle?' sel':'');
+    btn.innerHTML='<div style="font-size:18px;margin-bottom:2px">'+f.icon+'</div>'
+      +'<div style="font-weight:600;font-size:10px;color:var(--text)">'+f.name+'</div>'
+      +'<div style="font-size:9px;color:var(--muted);margin-top:1px">'+f.desc+'</div>';
+    btn.onclick=function(){
+      frameStyle=f.id;
+      document.querySelectorAll('#frameGrid .bg-btn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+      autoSave();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function themeAccent(){
+  if(themeId==='minimal')return'#333333';
+  if(themeId==='compare')return'#ef4444';
+  if(themeId==='claude')return'#cc785c';
+  return UC.accent;
+}
+
+function drawFaceFrame(ctx){
+  faceFrameT+=0.025; scanLineY+=3.5; filmFlicker=Math.random();
+  const acc=themeAccent();
+  const col=recording?'#ef4444':acc;
+  const W=CW,H=CAM_H;
+  if(frameStyle==='corner')  drawFrameCorner(ctx,W,H,col,acc);
+  if(frameStyle==='scanner') drawFrameScanner(ctx,W,H,col);
+  if(frameStyle==='pulse')   drawFramePulse(ctx,W,H,col,acc);
+  if(frameStyle==='neon')    drawFrameNeon(ctx,W,H,col,acc);
+  if(frameStyle==='film')    drawFrameFilm(ctx,W,H,col);
+  drawProgressArc(ctx,W,H,acc);
+}
+
+function drawFrameCorner(ctx,W,H,col,acc){
+  const PAD=20,R=30,CL=68;
+  const pulse=0.6+Math.sin(faceFrameT*1.4)*0.4;
+  ctx.save();
+  ctx.lineCap='round';
+  ctx.lineWidth=recording?9:6;
+  ctx.globalAlpha=recording?1:pulse*0.75;
+  ctx.strokeStyle=col;
+  if(!recording){ctx.shadowColor=acc;ctx.shadowBlur=8;}
+  [[PAD,PAD,1,1],[W-PAD,PAD,-1,1],[PAD,H-PAD,1,-1],[W-PAD,H-PAD,-1,-1]].forEach(([x,y,dx,dy])=>{
+    ctx.beginPath();
+    ctx.moveTo(x+dx*(R+CL),y);ctx.lineTo(x+dx*R,y);
+    ctx.arcTo(x,y,x,y+dy*R,R);ctx.lineTo(x,y+dy*(R+CL));
+    ctx.stroke();
+  });
+  ctx.shadowBlur=0;
+  ctx.globalAlpha=recording?0.9:0.5;
+  [[PAD,PAD],[W-PAD,PAD],[PAD,H-PAD],[W-PAD,H-PAD]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.arc(x,y,recording?6:4,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();
+  });
+  if(!recording){
+    ctx.strokeStyle=hexAlpha(acc,0.4);ctx.lineWidth=2;ctx.globalAlpha=0.25;
+    const P2=PAD+22,R2=18,L2=36;
+    [[P2,P2,1,1],[W-P2,P2,-1,1],[P2,H-P2,1,-1],[W-P2,H-P2,-1,-1]].forEach(([x,y,dx,dy])=>{
+      ctx.beginPath();
+      ctx.moveTo(x+dx*(R2+L2),y);ctx.lineTo(x+dx*R2,y);
+      ctx.arcTo(x,y,x,y+dy*R2,R2);ctx.lineTo(x,y+dy*(R2+L2));
+      ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+
+function drawFrameScanner(ctx,W,H,col){
+  const PAD=16,R=24;
+  const pulse=0.5+Math.sin(faceFrameT)*0.5;
+  ctx.save();
+  ctx.strokeStyle=col;ctx.lineWidth=2;
+  ctx.globalAlpha=recording?0.8:0.3;
+  ctx.setLineDash([28,14]);
+  rr(ctx,PAD,PAD,W-PAD*2,H-PAD*2,R);ctx.stroke();
+  ctx.setLineDash([]);
+  const cx=W/2,cy=H/2,cs=55;
+  ctx.globalAlpha=recording?pulse*0.85:0.25;
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineCap='round';
+  [[cx-cs,cy,cx-16,cy],[cx+16,cy,cx+cs,cy],[cx,cy-cs,cx,cy-16],[cx,cy+16,cx,cy+cs]].forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  });
+  ctx.beginPath();ctx.arc(cx,cy,11,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+  if(scanLineY>H+20)scanLineY=0;
+  const sy=PAD+(scanLineY%(H-PAD*2));
+  const grd=ctx.createLinearGradient(0,sy-20,0,sy+20);
+  grd.addColorStop(0,hexAlpha(col,0));
+  grd.addColorStop(0.5,hexAlpha(col,recording?0.55:0.2));
+  grd.addColorStop(1,hexAlpha(col,0));
+  ctx.globalAlpha=1;ctx.fillStyle=grd;ctx.fillRect(PAD,sy-20,W-PAD*2,40);
+  const TS=18;
+  ctx.strokeStyle=col;ctx.lineWidth=3;ctx.globalAlpha=recording?1:0.5;
+  [[PAD,PAD],[W-PAD-TS,PAD],[PAD,H-PAD-TS],[W-PAD-TS,H-PAD-TS]].forEach(([x,y])=>ctx.strokeRect(x,y,TS,TS));
+  ctx.font='bold 22px monospace';ctx.fillStyle=col;
+  ctx.globalAlpha=recording?pulse:0.25;
+  ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(recording?'● REC':'○ READY',PAD+8,PAD+8);
+  ctx.restore();
+}
+
+function drawFramePulse(ctx,W,H,col,acc){
+  const cx=W/2,cy=H/2,baseR=Math.min(W,H)*0.43;
+  ctx.save();
+  for(let i=0;i<3;i++){
+    const phase=faceFrameT*0.8+i*(Math.PI*2/3);
+    const expand=Math.sin(phase)*0.5+0.5;
+    const r=baseR+expand*55;
+    ctx.globalAlpha=(1-expand)*(recording?0.5:0.18);
+    ctx.strokeStyle=i===0?col:i===1?acc:hexAlpha(col,0.5);
+    ctx.lineWidth=recording?4:2;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+  }
+  ctx.globalAlpha=recording?0.85:0.32;
+  ctx.strokeStyle=col;ctx.lineWidth=recording?6:3;
+  ctx.shadowColor=col;ctx.shadowBlur=recording?18:8;
+  ctx.beginPath();ctx.arc(cx,cy,baseR,0,Math.PI*2);ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(faceFrameT);
+  ctx.strokeStyle=acc;ctx.lineWidth=2;ctx.globalAlpha=recording?0.35:0.12;
+  ctx.setLineDash([36,26]);
+  ctx.beginPath();ctx.arc(0,0,baseR+16,0,Math.PI*2);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
+  const dotR=7+Math.sin(faceFrameT*2)*3;
+  ctx.globalAlpha=recording?0.9:0.35;
+  ctx.beginPath();ctx.arc(cx,cy,dotR,0,Math.PI*2);
+  ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=14;ctx.fill();
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+function drawFrameNeon(ctx,W,H,col,acc){
+  const PAD=14,R=32;
+  const pulse=0.7+Math.sin(faceFrameT*2)*0.3;
+  ctx.save();
+  [14,8,3].forEach((blur,i)=>{
+    ctx.shadowColor=col;ctx.shadowBlur=blur;ctx.strokeStyle=col;
+    ctx.lineWidth=i===0?1.5:i===1?2.5:4;
+    ctx.globalAlpha=(recording?pulse:pulse*0.45)*(i===0?0.35:i===1?0.55:0.9);
+    rr(ctx,PAD,PAD,W-PAD*2,H-PAD*2,R);ctx.stroke();
+  });
+  ctx.shadowBlur=0;
+  ctx.strokeStyle=acc;ctx.lineWidth=1.5;ctx.globalAlpha=recording?0.28:0.1;
+  ctx.setLineDash([18,18]);
+  rr(ctx,PAD-12,PAD-12,W-(PAD-12)*2,H-(PAD-12)*2,R+10);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowColor=col;ctx.shadowBlur=18;ctx.globalAlpha=recording?pulse:pulse*0.55;
+  [[PAD,PAD],[W-PAD,PAD],[PAD,H-PAD],[W-PAD,H-PAD]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+  });
+  ctx.shadowBlur=0;ctx.globalAlpha=recording?0.65:0.25;
+  [[W/2,PAD],[W/2,H-PAD],[PAD,H/2],[W-PAD,H/2]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=acc;ctx.fill();
+  });
+  if(recording&&filmFlicker>0.06){
+    ctx.globalAlpha=filmFlicker*0.88;
+    ctx.font='bold 26px monospace';ctx.fillStyle=col;
+    ctx.shadowColor=col;ctx.shadowBlur=10;
+    ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('● LIVE',PAD+14,PAD+12);ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+
+function drawFrameFilm(ctx,W,H,col){
+  ctx.save();
+  const barH=Math.round(H*0.1);
+  ctx.fillStyle='#000';ctx.globalAlpha=0.9;
+  ctx.fillRect(0,0,W,barH);ctx.fillRect(0,H-barH,W,barH);
+  const hw=26,hh=20,hg=36;
+  ctx.fillStyle='#111';ctx.globalAlpha=1;
+  for(let y=hg/2;y<H;y+=hg){
+    rr(ctx,5,y,hw,hh,4);ctx.fill();
+    rr(ctx,W-hw-5,y,hw,hh,4);ctx.fill();
+  }
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.globalAlpha=0.5;
+  ctx.beginPath();ctx.moveTo(0,barH);ctx.lineTo(W,barH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,H-barH);ctx.lineTo(W,H-barH);ctx.stroke();
+  ctx.textBaseline='middle';
+  ctx.fillStyle='#fff';ctx.globalAlpha=0.45;ctx.font='400 20px monospace';ctx.textAlign='left';
+  ctx.fillText(new Date().toLocaleTimeString(),44,barH/2);
+  ctx.textAlign='center';ctx.fillStyle=col;ctx.globalAlpha=recording?0.9:0.4;
+  ctx.font='bold 22px monospace';
+  ctx.fillText(recording?'● REC':'○ STANDBY',W/2,barH/2);
+  const fn=Math.floor(faceFrameT*24)%10000;
+  ctx.fillStyle='#fff';ctx.globalAlpha=0.35;ctx.textAlign='right';
+  ctx.fillText(String(fn).padStart(4,'0'),W-44,barH/2);
+  ctx.fillStyle='#fff';ctx.globalAlpha=0.3;ctx.textAlign='left';ctx.font='400 18px monospace';
+  ctx.fillText('SCENE 01  TAKE '+String(Math.floor(faceFrameT/28)%99+1).padStart(2,'0'),44,H-barH/2);
+  ctx.fillStyle=col;ctx.globalAlpha=0.55;ctx.textAlign='right';
+  ctx.fillText(C.handle||'@channel',W-44,H-barH/2);
+  ctx.globalAlpha=0.022;
+  for(let i=0;i<160;i++){
+    const gx=Math.random()*W,gy=barH+Math.random()*(H-barH*2),gs=1+Math.random()*2;
+    ctx.fillStyle=Math.random()>0.5?'#fff':'#000';ctx.fillRect(gx,gy,gs,gs);
+  }
+  ctx.restore();
+}
+
+function drawProgressArc(ctx,W,H,acc){
+  if(!recording)return;
+  if(frameStyle==='film')return;
+  const elapsed=(Date.now()-recStart)/1000;
+  const pct=Math.min(1,elapsed/60);
+  const remain=Math.max(0,60-Math.floor(elapsed));
+  const arcCol=remain<=10?'#ef4444':remain<=20?'#F59E0B':acc;
+  const arcCX=W/2,arcCY=H-14,arcR=W*0.42;
+  ctx.save();
+  ctx.globalAlpha=0.2;ctx.strokeStyle=acc;ctx.lineWidth=5;
+  ctx.beginPath();ctx.arc(arcCX,arcCY,arcR,Math.PI,Math.PI*2);ctx.stroke();
+  ctx.globalAlpha=0.88;ctx.strokeStyle=arcCol;ctx.lineWidth=5;ctx.lineCap='round';
+  ctx.beginPath();ctx.arc(arcCX,arcCY,arcR,Math.PI,Math.PI+pct*Math.PI);ctx.stroke();
+  const bW=96,bH=38,bX=arcCX-bW/2,bY=H-bH-10;
+  rr(ctx,bX,bY,bW,bH,19);
+  ctx.globalAlpha=0.8;
+  ctx.fillStyle=remain<=10?hexAlpha('#ef4444',.3):hexAlpha(acc,.18);ctx.fill();
+  ctx.strokeStyle=arcCol;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle=arcCol;ctx.font='bold 24px sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(remain+'s',arcCX,bY+bH/2);
+  ctx.restore();
+}
+
+
 </script>
 </body>
 </html>
