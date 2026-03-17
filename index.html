@@ -276,33 +276,9 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
     <video id="camVideo" autoplay playsinline muted></video>
     <canvas id="overlayCanvas"></canvas>
     <div id="recDot"></div>
-    <!-- Tap zones — invisible, sit over the infographic area only (bottom 2/3) -->
-    <div id="tapLeft"  onclick="handleTapZone('left')"  style="
-      position:absolute;left:0;top:33.33%;width:50%;height:66.67%;
-      z-index:10;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-    ">
-      <div id="tapLeftFeedback" style="
-        width:80px;height:80px;border-radius:50%;
-        background:rgba(255,255,255,0.12);
-        display:none;align-items:center;justify-content:center;
-        font-size:28px;color:rgba(255,255,255,0.7);
-        pointer-events:none;
-      ">‹</div>
-    </div>
-    <div id="tapRight" onclick="handleTapZone('right')" style="
-      position:absolute;right:0;top:33.33%;width:50%;height:66.67%;
-      z-index:10;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-    ">
-      <div id="tapRightFeedback" style="
-        width:80px;height:80px;border-radius:50%;
-        background:rgba(255,255,255,0.12);
-        display:none;align-items:center;justify-content:center;
-        font-size:28px;color:rgba(255,255,255,0.7);
-        pointer-events:none;
-      ">›</div>
-    </div>
+    <!-- Tap zones — navigation only, no visual feedback, never recorded -->
+    <div id="tapLeft"  onclick="handleTapZone('left')"  style="position:absolute;left:0;top:33.33%;width:50%;height:66.67%;z-index:10;cursor:pointer;-webkit-tap-highlight-color:transparent;"></div>
+    <div id="tapRight" onclick="handleTapZone('right')" style="position:absolute;right:0;top:33.33%;width:50%;height:66.67%;z-index:10;cursor:pointer;-webkit-tap-highlight-color:transparent;"></div>
   </div>
   <div id="controlBar">
     <!-- top row: status + audio + rec -->
@@ -819,7 +795,6 @@ async function initRecorder(){
       if(relX > 0.5) movePoint(1);
       else           movePoint(-1);
       // show tap ripple feedback
-      showTapRipple(e.clientX, e.clientY, relX > 0.5);
     });
 
     // Touch support
@@ -832,7 +807,6 @@ async function initRecorder(){
       if(relY < 0.36) return;
       if(relX > 0.5) movePoint(1);
       else           movePoint(-1);
-      showTapRipple(t.clientX, t.clientY, relX > 0.5);
     }, {passive:false});
     buildStepPills();
     setupAudioMeter();
@@ -981,9 +955,7 @@ function drawLoop(ts){
   }
 
   // tap ripples
-  drawTapRipples(ctx);
   // zone hint
-  drawZoneHint(ctx);
 
   // rec dot
   if(recording&&Math.sin(Date.now()/280)>0){
@@ -1107,72 +1079,8 @@ function drawBgConstellation(ctx){
 // ══════════════════════════════════════════════
 // TAP RIPPLE FEEDBACK
 // ══════════════════════════════════════════════
-const tapRipples = [];
-function showTapRipple(x, y, isNext){
-  tapRipples.push({
-    x, y, r:0, maxR:60, alpha:0.7,
-    color: isNext ? UC.accent : UC.muted,
-    label: isNext ? '▶' : '◀',
-    isNext
-  });
-  // flash the button briefly
-  const btn = document.getElementById(isNext?'nextBtn':'prevBtn');
-  if(btn){ btn.style.transform='scale(0.92)'; setTimeout(()=>btn.style.transform='',150); }
-}
-function drawTapRipples(ctx){
-  for(let i=tapRipples.length-1;i>=0;i--){
-    const rp = tapRipples[i];
-    rp.r     += 4;
-    rp.alpha -= 0.045;
-    if(rp.alpha <= 0){ tapRipples.splice(i,1); continue; }
-    const rect = document.getElementById('overlayCanvas').getBoundingClientRect();
-    const canX = (rp.x - rect.left) * (CW / rect.width);
-    const canY = (rp.y - rect.top)  * (CH / rect.height);
-    ctx.save();
-    ctx.globalAlpha = rp.alpha;
-    ctx.strokeStyle = rp.color;
-    ctx.lineWidth   = 3;
-    ctx.beginPath(); ctx.arc(canX, canY, rp.r, 0, Math.PI*2); ctx.stroke();
-    ctx.globalAlpha = rp.alpha * 0.5;
-    ctx.font = 'bold 28px sans-serif';
-    ctx.fillStyle = rp.color;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(rp.label, canX, canY);
-    ctx.restore();
-  }
-}
 
 // ── Zone hint — shown briefly when recording starts ──
-let zoneHintAlpha = 0, zoneHintTimer = 0;
-function showZoneHint(){ zoneHintAlpha = 0.7; zoneHintTimer = 120; }
-function drawZoneHint(ctx){
-  if(zoneHintAlpha <= 0) return;
-  zoneHintTimer--;
-  if(zoneHintTimer < 30) zoneHintAlpha -= 0.022;
-  const midX = CW/2, zY = INFO_Y + INFO_H*0.5;
-  ctx.save();
-  ctx.globalAlpha = zoneHintAlpha * 0.22;
-  // left zone
-  ctx.fillStyle = UC.muted;
-  ctx.fillRect(0, INFO_Y, midX, INFO_H);
-  // right zone
-  ctx.fillStyle = UC.accent;
-  ctx.fillRect(midX, INFO_Y, midX, INFO_H);
-  ctx.globalAlpha = zoneHintAlpha * 0.85;
-  // divider line
-  ctx.strokeStyle = hexAlpha('#fff', 0.3); ctx.lineWidth = 2;
-  ctx.setLineDash([12,8]);
-  ctx.beginPath(); ctx.moveTo(midX, INFO_Y+40); ctx.lineTo(midX, INFO_Y+INFO_H-40); ctx.stroke();
-  ctx.setLineDash([]);
-  // left label
-  ctx.font = 'bold 38px sans-serif';
-  ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('◀ PREV', midX*0.5, zY);
-  // right label
-  ctx.fillStyle = '#fff';
-  ctx.fillText('NEXT ▶', midX + midX*0.5, zY);
-  ctx.restore();
-}
 
 // ══════════════════════════════════════════════
 // FACE FRAME
@@ -1841,7 +1749,6 @@ function startRec(){
   document.getElementById('recBtn').className='rec-btn stop';
   document.getElementById('ctrlStatus').innerHTML='<span class="rec-label"><span class="rdot"></span> REC <span id="recTimer">0:00</span></span>';
   // show tap zone hint briefly at start
-  showZoneHint();
 }
 function updateTimer(){
   const s=Math.floor((Date.now()-recStart)/1000);
@@ -1929,20 +1836,8 @@ function downloadThumb(){
 // ══════════════════════════════════════════════
 // TAP ZONES
 // ══════════════════════════════════════════════
-let tapFeedbackTimer = null;
 function handleTapZone(side){
-  const dir   = side === 'right' ? 1 : -1;
-  const fbId  = side === 'right' ? 'tapRightFeedback' : 'tapLeftFeedback';
-  const fb    = document.getElementById(fbId);
-
-  // flash feedback circle
-  if(fb){
-    fb.style.display = 'flex';
-    clearTimeout(tapFeedbackTimer);
-    tapFeedbackTimer = setTimeout(()=>{ fb.style.display='none'; }, 300);
-  }
-
-  movePoint(dir);
+  movePoint(side === 'right' ? 1 : -1);
 }
 
 // ══════════════════════════════════════════════
