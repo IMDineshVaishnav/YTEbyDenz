@@ -601,50 +601,57 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 /* ══ CONTROL BAR — sticky bottom, never scrolls ══ */
 #controlBar{
   width:100%;
-  background:#0a0a0a;
-  border-top:2px solid var(--ed-saffron,#FF6B00);
-  padding:8px 10px;
+  background:#0d0d0d;
+  border-top:2px solid #FF6B00;
+  padding:8px 10px 6px;
   display:flex;
   flex-direction:column;
   gap:6px;
   flex-shrink:0;
-  position:relative;
-  z-index:10;
+  box-sizing:border-box;
 }
-.ctrl-top{display:flex;align-items:center;gap:8px;min-height:36px}
-.ctrl-status{flex:1;font-size:11px;color:var(--muted);font-family:var(--font-mono,'Courier New'),monospace;letter-spacing:1px}
-.rec-label{display:inline-flex;align-items:center;gap:5px;color:var(--red);font-weight:600}
-.rdot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1s ease-in-out infinite}
-.ready-lbl{color:var(--green);font-weight:600}
-.rec-btn{padding:10px 22px;border-radius:0;border:none;cursor:pointer;font-size:13px;font-weight:800;transition:all .2s;letter-spacing:2px;font-family:var(--font-mono,'Courier New'),monospace}
-.rec-btn.start{background:var(--red,#ef4444);color:#fff;box-shadow:0 0 12px rgba(239,68,68,.4)}
-.rec-btn.stop{background:#1a0000;color:var(--red,#ef4444);border:2px solid var(--red,#ef4444)}
-.rec-btn.pause{background:#1a1200;color:#F59E0B;border:2px solid #F59E0B}
-.rec-btn.resume{background:#F59E0B;color:#000}
-.rec-btn.pause{border-radius:0!important;font-family:var(--font-mono)!important;font-size:11px!important;letter-spacing:2px!important}
-.rec-btn.resume{background:#1a1a1a;color:var(--green);border:1px solid var(--green);border-radius:0!important;font-family:var(--font-mono)!important;font-size:11px!important;letter-spacing:2px!important}
 
+/* every row fills full width */
+.cb-row{display:flex;align-items:center;width:100%;box-sizing:border-box;gap:6px}
+
+/* ROW 1 — status left, rec buttons right */
+.cb-top{justify-content:space-between}
+.cb-status-group{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.cb-rec-group{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ctrl-status{font-size:11px;color:var(--muted);font-family:var(--font-mono,'Courier New'),monospace;letter-spacing:1px;white-space:nowrap}
+.ready-lbl{color:#22c55e;font-weight:700}
+.rec-label{display:inline-flex;align-items:center;gap:5px;color:#ef4444;font-weight:700}
+.rdot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:blink 1s ease-in-out infinite}
+
+/* REC / STOP */
+.rec-btn{height:40px;min-width:64px;padding:0 16px;border-radius:4px;border:none;cursor:pointer;font-size:13px;font-weight:800;letter-spacing:2px;font-family:var(--font-mono,'Courier New'),monospace;white-space:nowrap}
+.rec-btn.start{background:#ef4444;color:#fff;box-shadow:0 0 14px rgba(239,68,68,.5)}
+.rec-btn.stop{background:#1a0000;color:#ef4444;border:2px solid #ef4444}
+
+/* PAUSE / RESUME */
+#pauseBtn{height:40px;min-width:72px;padding:0 12px;border-radius:4px;border:2px solid #F59E0B;background:#1a1200;color:#F59E0B;font-size:11px;font-weight:800;letter-spacing:1px;font-family:var(--font-mono,'Courier New'),monospace;cursor:pointer;white-space:nowrap}
+#pauseBtn.resuming{border-color:#22c55e;color:#22c55e;background:#001a00}
 /* audio meter */
 .audio-wrap{display:flex;align-items:center;gap:6px}
 .audio-label{font-size:9px;color:var(--muted);white-space:nowrap}
 .audio-bars{display:flex;gap:2px;align-items:flex-end;height:16px}
 .abar{width:4px;border-radius:2px;background:#2a2a2a;transition:height .08s ease}
 
-.ctrl-nav{display:flex;align-items:center;gap:8px}
-.nav-btn{flex:1;padding:11px;border-radius:0;border:none;cursor:pointer;font-size:13px;font-weight:700;background:#1e1e1e;color:var(--text);transition:all .2s;font-family:var(--font-mono,'Courier New'),monospace;letter-spacing:1px}
-.nav-btn:disabled{opacity:.2;cursor:default}
-.nav-btn.fwd{background:var(--ed-saffron,#FF6B00);color:#fff}
-.step-pills{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;min-width:50px}
-.sp{width:7px;height:7px;border-radius:50%;background:#333;transition:all .3s;flex-shrink:0}
-.sp.on{background:var(--ed-saffron,#FF6B00);width:18px;border-radius:2px}
-.sp.done{background:#555}
+.cb-nav{gap:6px}
+.nav-btn{flex:1;height:40px;border-radius:4px;border:1px solid #222;cursor:pointer;font-size:13px;font-weight:700;background:#1a1a1a;color:#ccc;transition:all .2s;font-family:var(--font-mono,'Courier New'),monospace;letter-spacing:1px;white-space:nowrap;min-width:0}
+.nav-btn:disabled{opacity:.25;cursor:default;background:#111}
+.nav-btn.fwd{background:#FF6B00;color:#fff;border-color:#FF6B00;flex:2}
+.step-pills{display:flex;gap:5px;align-items:center;justify-content:center;flex-shrink:0;padding:0 4px}
+.sp{width:8px;height:8px;border-radius:50%;background:#333;transition:all .3s;flex-shrink:0}
+.sp.on{background:#FF6B00;width:22px;border-radius:3px}
+.sp.done{background:#666}
 
-/* action row */
-.action-row{display:flex;gap:5px}
-.act-btn{flex:1;padding:9px 2px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);transition:all .2s;text-align:center;min-height:44px}
-.act-btn:hover{border-color:var(--accent);color:var(--text)}
-.act-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(245,158,11,.08)}
-.act-btn.flip-on{border-color:#a855f7;color:#a855f7;background:rgba(168,85,247,.08)}
+/* ROW 3 — 5 equal action buttons */
+.action-row{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:5px}
+.act-btn{height:40px;padding:0 2px;border-radius:5px;border:1px solid #252525;background:#111;cursor:pointer;font-size:10px;font-weight:600;color:#777;transition:all .2s;white-space:nowrap;display:flex;align-items:center;justify-content:center;letter-spacing:.3px}
+.act-btn:hover{border-color:#FF6B00;color:#eee;background:#1a1a1a}
+.act-btn.active{border-color:#F59E0B;color:#F59E0B;background:rgba(245,158,11,.1)}
+.act-btn.flip-on{border-color:#a855f7;color:#a855f7;background:rgba(168,85,247,.1)}
 
 /* teleprompter */
 #prompterPanel{background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:8px 12px;max-height:80px;overflow-y:auto;display:none;flex-shrink:0;}
@@ -682,26 +689,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 .tbtn2.dl{background:var(--accent);color:#fff}
 .tbtn2.close{background:#1a1a1a;color:var(--muted)}
 
-@media(max-width:480px){#previewWrap,#controlBar{max-width:100vw}}
-@media(min-width:481px){
-  #recScreen{background:#111;justify-content:center;flex-direction:row;align-items:center;gap:0;}
-  #previewWrap{
-    width:calc((100vh - 200px) * 9/16);
-    height:calc(100vh - 200px);
-    max-width:400px;
-    flex:none;
-    aspect-ratio:9/16;
-  }
-  #controlBar{
-    width:240px;
-    max-width:240px;
-    height:calc(100vh - 200px);
-    border-top:none;
-    border-left:1px solid var(--border);
-    overflow-y:auto;
-    flex-shrink:0;
-  }
-}
+/* old side-by-side layout removed */
 
 /* face overlay prompter — shown ON face area, NOT recorded */
 
@@ -888,40 +876,48 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
     <div id="tapRight" onclick="handleTapZone('right')" style="position:absolute;right:0;top:33.33%;width:50%;height:66.67%;z-index:10;cursor:pointer;-webkit-tap-highlight-color:transparent;"></div>
   </div>
   <div id="controlBar">
-    <!-- top row: status + audio + rec -->
-    <div class="ctrl-top">
-      <div style="display:flex;flex-direction:column;gap:4px;flex:1">
+
+    <!-- ROW 1: status+mic LEFT | REC+PAUSE RIGHT -->
+    <div class="cb-row cb-top">
+      <div class="cb-status-group">
         <div class="ctrl-status" id="ctrlStatus"><span class="ready-lbl">Ready</span></div>
         <div class="audio-wrap" id="audioWrap">
           <span class="audio-label">MIC</span>
           <div class="audio-bars" id="audioBars"></div>
         </div>
       </div>
-      <button class="rec-btn start" id="recBtn" onclick="toggleRecord()">REC</button>
-      <button class="rec-btn pause" id="pauseBtn" onclick="togglePause()" style="display:none;background:#1a1a1a;color:#F59E0B;border:1px solid #F59E0B;margin-left:6px">PAUSE</button>
+      <div class="cb-rec-group">
+        <button class="rec-btn start" id="recBtn" onclick="toggleRecord()">REC</button>
+        <button class="rec-btn" id="pauseBtn" onclick="togglePause()" style="display:none">PAUSE</button>
+      </div>
     </div>
 
-    <!-- teleprompter -->
+    <!-- teleprompter (hidden unless custom script) -->
     <div id="prompterPanel"><p id="prompterText"></p></div>
 
-    <!-- nav -->
-    <div class="ctrl-nav">
+    <!-- ROW 2: PREV | pills | NEXT — full width -->
+    <div class="cb-row cb-nav">
       <button class="nav-btn" id="prevBtn" onclick="movePoint(-1)" disabled>Prev</button>
       <div class="step-pills" id="stepPills"></div>
       <button class="nav-btn fwd" id="nextBtn" onclick="movePoint(1)">Next</button>
     </div>
 
-    <!-- action buttons -->
-    <div class="action-row">
-      <button class="act-btn" id="ctaBtn" onclick="toggleCTA()">CTA Ring</button>
-        <button class="act-btn" id="fpBtn" onclick="toggleFacePrompter()">Script Overlay</button>
-      <button class="act-btn" id="flipBtn" onclick="toggleFlip()">Flip Cam</button>
-      <button class="act-btn" id="bgTogBtn" onclick="toggleBgVis()">Hide BG</button>
-      <button class="act-btn" onclick="resetPoints()">Reset</button>
+    <!-- ROW 3: 5 action buttons — equal grid -->
+    <div class="cb-row action-row">
+      <button class="act-btn" id="ctaBtn"   onclick="toggleCTA()">CTA</button>
+      <button class="act-btn" id="fpBtn"    onclick="toggleFacePrompter()">Script</button>
+      <button class="act-btn" id="flipBtn"  onclick="toggleFlip()">Flip</button>
+      <button class="act-btn" id="bgTogBtn" onclick="toggleBgVis()">BG</button>
+      <button class="act-btn"               onclick="resetPoints()">Reset</button>
     </div>
 
-    <div class="ctrl-tip">
-      <kbd class="kbd">Space</kbd>next <kbd class="kbd">←</kbd>prev <kbd class="kbd">R</kbd>rec <kbd class="kbd">C</kbd>cta <kbd class="kbd">F</kbd>flip
+    <!-- ROW 4: keyboard hints -->
+    <div class="cb-row ctrl-tip">
+      <kbd class="kbd">Space</kbd>next&nbsp;
+      <kbd class="kbd">←</kbd>prev&nbsp;
+      <kbd class="kbd">R</kbd>rec&nbsp;
+      <kbd class="kbd">C</kbd>cta&nbsp;
+      <kbd class="kbd">F</kbd>flip
     </div>
   </div><!-- /controlBar -->
   </div><!-- /recColumn -->
@@ -1426,7 +1422,7 @@ async function initRecorder(){
   totalPoints=C.pts.length;
   ptOpacity=Array(totalPoints).fill(0);
   ptTarget=Array(totalPoints).fill(0);
-  ptTarget[0]=1;
+  curPoint=-1;
   camMirrored=document.getElementById('tMirror').checked;
   ctaAutoHide=document.getElementById('tAutoHide').checked;
   bgIntensityMult=parseInt(document.getElementById('bgIntensity').value)/100;
@@ -1493,7 +1489,7 @@ async function initUploadMode(){
   totalPoints = C.pts.length;
   ptOpacity   = Array(totalPoints).fill(0);
   ptTarget    = Array(totalPoints).fill(0);
-  ptTarget[0] = 1;
+  curPoint    = -1;
   bgIntensityMult = parseInt(document.getElementById('bgIntensity').value)/100;
   ctaAutoHide     = document.getElementById('tAutoHide').checked;
 
@@ -1819,7 +1815,7 @@ function drawGlass(ctx){
   txt(ctx,C.pill,P+62,INFO_Y+58,30,UC.accent,'600','left',pw-80);
   const n=C.pts.length;
   // Card height: compact, readable — max 200px per card
-  const gap=16, topPad=118, botPad=60;
+  const gap=20, topPad=80, botPad=48;
   const maxCardH = 200;
   const availH = INFO_H - topPad - botPad - (n-1)*gap;
   const cardH = Math.min(maxCardH, Math.floor(availH/n));
@@ -1827,8 +1823,10 @@ function drawGlass(ctx){
   const totalCards = cardH*n + gap*(n-1);
   const startY = INFO_Y + topPad + Math.max(0,(availH - totalCards)/2);
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i];if(op<=0)continue;
-    ctx.save();ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint) { ctx.restore(); continue; } // not yet revealed
+    const drawOp = (i===curPoint) ? 1.0 : op; // active=full, past=animated opacity
+    ctx.save();ctx.globalAlpha=drawOp;
     const py=startY+i*(cardH+gap),isActive=i===curPoint;
     // card bg
     rr(ctx,P,py,CW-P*2,cardH,18);
@@ -1861,7 +1859,7 @@ function drawGlass(ctx){
     txt(ctx, C.pts[i].s, textX, subY,  subSz,  isActive?hexAlpha(UC.accent,.9):UC.muted, '400', 'left', textW);
     ctx.restore();
   }
-  progBar(ctx,P,INFO_Y+INFO_H-52,CW-P*2,6,(curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,3);
+  progBar(ctx,P,INFO_Y+INFO_H-52,CW-P*2,6,Math.max(0,curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,3);
   txt(ctx,C.handle,CW-P,INFO_Y+INFO_H-26,22,hexAlpha(UC.muted,.5),'400','right');
 }
 function drawSplit(ctx){
@@ -1874,6 +1872,11 @@ function drawSplit(ctx){
   ctx.beginPath();ctx.arc(CW-90,INFO_Y+hdrH/2,56,0,Math.PI*2);ctx.fillStyle=UC.bg;ctx.fill();
   txt(ctx,curPoint+1,CW-90,INFO_Y+hdrH/2-28,60,UC.accent,'800','center');
   const bodyY=INFO_Y+hdrH,bodyH=INFO_H-hdrH-70;
+  if(curPoint < 0){
+    // nothing revealed yet — show placeholder
+    txt(ctx,'TAP NEXT TO BEGIN',CW/2,INFO_Y+INFO_H/2,28,hexAlpha(UC.accent,.3),'700','center');
+    return;
+  }
   const nums=['POINT 01','POINT 02','POINT 03','POINT 04','POINT 05','POINT 06','POINT 07','POINT 08'];
   txt(ctx,nums[curPoint]||'POINT',P,bodyY+44,24,UC.accent,'700','left');
   txt(ctx,C.pts[curPoint].b||'',P,bodyY+88,48,UC.text,'700','left',CW-P*2);
@@ -1883,7 +1886,7 @@ function drawSplit(ctx){
   txt(ctx,'COMING UP',P,cuY+24,20,hexAlpha(UC.muted,.5),'600','left');
   txt(ctx,curPoint+1<C.pts.length?C.pts[curPoint+1].b:'—',P,cuY+56,26,hexAlpha(UC.text,.7),'400','left',CW-P*2);
   txt(ctx,curPoint+2<C.pts.length?C.pts[curPoint+2].b:'—',P,cuY+92,26,hexAlpha(UC.muted,.5),'400','left',CW-P*2);
-  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,(curPoint+1)/C.pts.length,hexAlpha(UC.accent,.2),UC.accent,0);
+  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,Math.max(0,curPoint+1)/C.pts.length,hexAlpha(UC.accent,.2),UC.accent,0);
 }
 function drawChecklist(ctx){
   rr(ctx,0,INFO_Y,CW,INFO_H,0);ctx.fillStyle='#0a0500';ctx.fill();
@@ -1892,7 +1895,10 @@ function drawChecklist(ctx){
   txt(ctx,C.pill,P,INFO_Y+28,30,UC.accent,'700','left',CW-P*2);
   const n=C.pts.length,itemH=Math.floor((INFO_H-140)/n);
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i];if(op<=0)continue;ctx.save();ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint || curPoint < 0) continue;
+    const drawAlpha = (i===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save();ctx.globalAlpha=drawAlpha;
     const iy=INFO_Y+106+i*itemH,cy2=iy+itemH/2,isDone=i<curPoint,isActive=i===curPoint;
     if(isActive){rr(ctx,P-14,iy+8,CW-P*2+28,itemH-16,14);ctx.fillStyle=hexAlpha(UC.accent,.08);ctx.fill();}
     ctx.beginPath();ctx.arc(P+34,cy2,28,0,Math.PI*2);
@@ -1903,7 +1909,7 @@ function drawChecklist(ctx){
     txt(ctx,C.pts[i].s,P+80,cy2+18,24,hexAlpha(UC.muted,.8),'400','left',CW-P*2-90);
     ctx.restore();
   }
-  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,(curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,0);
+  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,Math.max(0,curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,0);
 }
 function drawNeon(ctx){
   rr(ctx,0,INFO_Y,CW,INFO_H,0);ctx.fillStyle='#080808';ctx.fill();
@@ -1912,7 +1918,10 @@ function drawNeon(ctx){
   txt(ctx,C.pill,P+28,INFO_Y+44,30,hexAlpha(UC.text,.9),'700','left',CW-P*2-30);
   const n=C.pts.length,cardH=Math.floor((INFO_H-160)/n)-12,startY=INFO_Y+110;
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i];if(op<=0)continue;ctx.save();ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint || curPoint < 0) continue;
+    const drawAlpha = (i===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save();ctx.globalAlpha=drawAlpha;
     const py=startY+i*(cardH+16),isActive=i===curPoint;
     rr(ctx,P,py,CW-P*2,cardH,20);ctx.fillStyle=isActive?hexAlpha(UC.accent,.1):'#0f0f0f';ctx.fill();
     if(isActive){ctx.shadowColor=UC.accent;ctx.shadowBlur=22;}
@@ -1933,10 +1942,13 @@ function drawTimeline(ctx){
   const itemH=(INFO_H-80)/n;
   const lineEnd=INFO_Y+60+(n-1)*itemH+itemH*0.5;
   ctx.strokeStyle='#1a1a2e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lineX,INFO_Y+60);ctx.lineTo(lineX,lineEnd);ctx.stroke();
-  const fillH=((curPoint+.5)/n)*(lineEnd-(INFO_Y+60));
+  const fillH=(Math.max(0,curPoint+.5)/n)*(lineEnd-(INFO_Y+60));
   ctx.strokeStyle=UC.accent;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lineX,INFO_Y+60);ctx.lineTo(lineX,INFO_Y+60+fillH);ctx.stroke();
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i];if(op<=0)continue;ctx.save();ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint || curPoint < 0) continue;
+    const drawAlpha = (i===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save();ctx.globalAlpha=drawAlpha;
     const py=INFO_Y+96+i*itemH,isActive=i===curPoint,isDone=i<curPoint;
     ctx.beginPath();ctx.arc(lineX,py+itemH/2,isActive?18:14,0,Math.PI*2);
     if(isDone){ctx.fillStyle=UC.accent;ctx.fill();}else if(isActive){ctx.fillStyle='#0a0a18';ctx.fill();ctx.shadowColor=UC.accent;ctx.shadowBlur=18;}
@@ -1959,7 +1971,10 @@ function drawMinimal(ctx){
   txt(ctx,C.pill.toUpperCase(),P,INFO_Y+72,22,'#111','800','left',CW-P*2);
   const n=C.pts.length,itemH=(INFO_H-110)/n;
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i];if(op<=0)continue;ctx.save();ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint || curPoint < 0) continue;
+    const drawAlpha = (i===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save();ctx.globalAlpha=drawAlpha;
     const py=INFO_Y+90+i*itemH,isActive=i===curPoint;
     ctx.strokeStyle='#ddd';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(P,py);ctx.lineTo(CW-P,py);ctx.stroke();
     txt(ctx,'0'+(i+1),P,py+14,76,isActive?'#111':'#ccc','800','left');
@@ -1968,7 +1983,7 @@ function drawMinimal(ctx){
     ctx.restore();
   }
   ctx.strokeStyle='#ddd';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(P,INFO_Y+90+n*itemH);ctx.lineTo(CW-P,INFO_Y+90+n*itemH);ctx.stroke();
-  progBar(ctx,P,INFO_Y+INFO_H-50,CW-P*2,4,(curPoint+1)/n,'#ddd','#111',2);
+  progBar(ctx,P,INFO_Y+INFO_H-50,CW-P*2,4,Math.max(0,curPoint+1)/n,'#ddd','#111',2);
   txt(ctx,C.handle,CW-P,INFO_Y+INFO_H-28,22,'#bbb','400','right');
 }
 function drawCards(ctx){
@@ -1978,7 +1993,10 @@ function drawCards(ctx){
   const n=C.pts.length,cols=n>4?3:2,rows=Math.ceil(n/cols),gap=16;
   const cw2=(CW-P*2-gap*(cols-1))/cols,ch2=(INFO_H-90-gap*(rows-1))/rows;
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i];if(op<=0)continue;ctx.save();ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint || curPoint < 0) continue;
+    const drawAlpha = (i===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save();ctx.globalAlpha=drawAlpha;
     const col=i%cols,row=Math.floor(i/cols),isActive=i===curPoint;
     const cx2=P+col*(cw2+gap),cy2=INFO_Y+60+row*(ch2+gap);
     rr(ctx,cx2,cy2,cw2,ch2,16);ctx.fillStyle=isActive?hexAlpha(UC.accent,.15):UC.card;ctx.fill();
@@ -1992,7 +2010,7 @@ function drawCards(ctx){
     txt(ctx,C.pts[i].s,cx2+14,cardTextY+cardFontB+6,cardFontS,UC.muted,'400','left',cw2-20);
     ctx.restore();
   }
-  progBar(ctx,P,INFO_Y+INFO_H-48,CW-P*2,6,(curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,3);
+  progBar(ctx,P,INFO_Y+INFO_H-48,CW-P*2,6,Math.max(0,curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,3);
 }
 function drawBoldTicker(ctx){
   rr(ctx,0,INFO_Y,CW,INFO_H,0);ctx.fillStyle='#0a0a0a';ctx.fill();
@@ -2000,7 +2018,10 @@ function drawBoldTicker(ctx){
   rr(ctx,0,INFO_Y,8,INFO_H,0);ctx.fillStyle=UC.accent;ctx.fill();
   const n=C.pts.length,secH=(INFO_H-20)/Math.max(n,1);
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i];if(op<=0)continue;ctx.save();ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint || curPoint < 0) continue;
+    const drawAlpha = (i===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save();ctx.globalAlpha=drawAlpha;
     const sy=INFO_Y+10+i*secH,isActive=i===curPoint;
     if(isActive){rr(ctx,20,sy-10,CW-40,secH-4,12);ctx.fillStyle='#161616';ctx.fill();}
     const bFontLg=Math.max(28,Math.min(44,secH*0.32));
@@ -2010,13 +2031,14 @@ function drawBoldTicker(ctx){
       txt(ctx,'NOW',28,sy+4,Math.min(20,secH*0.15),UC.accent,'800','left');
       txt(ctx,C.pts[i].b,28,sy+Math.min(36,secH*0.28),bFontLg,UC.text,'700','left',CW-70);
       txt(ctx,C.pts[i].s,28,sy+Math.min(36,secH*0.28)+bFontLg+8,bFontSm,UC.muted,'400','left',CW-70);
-    } else {
-      txt(ctx,(i<curPoint?'✓ ':' - ')+C.pts[i].b,28,sy+secH/2-bFontInactive/2,bFontInactive,i<curPoint?hexAlpha(UC.accent,.6):'#333','600','left',CW-70);
+    } else if(i < curPoint) {
+      txt(ctx,'✓  '+C.pts[i].b,28,sy+secH/2-bFontInactive/2,bFontInactive,hexAlpha(UC.accent,.5),'600','left',CW-70);
     }
+    // future points (i > curPoint) are hidden — revealed on click
     if(i<n-1){ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(28,sy+secH-4);ctx.lineTo(CW-28,sy+secH-4);ctx.stroke();}
     ctx.restore();
   }
-  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,(curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,0);
+  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,Math.max(0,curPoint+1)/n,hexAlpha(UC.accent,.2),UC.accent,0);
 }
 
 // ══════════════════════════════════════════════
@@ -2049,10 +2071,13 @@ function drawCompare(ctx){
   const rowH  = Math.floor((INFO_H - hdrH - 80) / Math.max(n-2,1));
   const rows  = C.pts.slice(2);
   rows.forEach((row,i)=>{
-    const op = ptOpacity[i+2]; if(op<=0) return;
-    ctx.save(); ctx.globalAlpha = op;
+    const realIdx = i+2;
+    if(realIdx > curPoint || curPoint < 0) return;
+    const op = ptOpacity[realIdx];
+    const drawAlpha = (realIdx===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save(); ctx.globalAlpha = drawAlpha;
     const ry = INFO_Y + hdrH + i*rowH;
-    const isActive = (i+2)===curPoint;
+    const isActive = (realIdx)===curPoint;
 
     // row bg
     if(isActive){
@@ -2087,13 +2112,9 @@ function drawCompare(ctx){
 
   // first two points revealed as column labels (already shown above)
   // show them with opacity animation
-  if(ptOpacity[0]>0){
-    ctx.save(); ctx.globalAlpha=ptOpacity[0];
-    // already drawn above
-    ctx.restore();
-  }
+  // col headers revealed with first click (point 0 = left label, point 1 = right label)
 
-  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,(curPoint+1)/C.pts.length,hexAlpha('#fff',.1),UC.accent,0);
+  progBar(ctx,0,INFO_Y+INFO_H-8,CW,8,Math.max(0,curPoint+1)/C.pts.length,hexAlpha('#fff',.1),UC.accent,0);
   txt(ctx,C.handle,CW-P,INFO_Y+INFO_H-26,22,hexAlpha(UC.muted,.4),'400','right');
 }
 
@@ -2144,8 +2165,10 @@ function drawClaude(ctx){
   const n=C.pts.length, cardH=Math.min(130,Math.floor((INFO_H-200)/n));
   const startY=INFO_Y+130;
   for(let i=0;i<n;i++){
-    const op=ptOpacity[i]; if(op<=0) continue;
-    ctx.save(); ctx.globalAlpha=op;
+    const op=ptOpacity[i];
+    if(i > curPoint || curPoint < 0) continue;
+    const drawAlpha2 = (i===curPoint) ? 1.0 : Math.min(op, 0.4);
+    ctx.save(); ctx.globalAlpha=drawAlpha2;
     const py=startY+i*(cardH+12), isActive=i===curPoint;
 
     // card
@@ -2171,7 +2194,7 @@ function drawClaude(ctx){
   }
 
   // progress
-  progBar(ctx,P,INFO_Y+INFO_H-52,CW-P*2,5,(curPoint+1)/n,hexAlpha(CACC,.15),CACC,3);
+  progBar(ctx,P,INFO_Y+INFO_H-52,CW-P*2,5,Math.max(0,curPoint+1)/n,hexAlpha(CACC,.15),CACC,3);
   txt(ctx,C.handle,CW-P,INFO_Y+INFO_H-28,22,hexAlpha(CMUT,.6),'400','right');
 }
 
@@ -2328,18 +2351,25 @@ function drawCommentIcon(ctx,color,chipBg){ctx.fillStyle=color;rr(ctx,-22,-20,44
 // POINT NAVIGATION
 // ══════════════════════════════════════════════
 function movePoint(dir){
-  curPoint=Math.max(0,Math.min(C.pts.length-1,curPoint+dir));
-  for(let i=0;i<=curPoint;i++)ptTarget[i]=1;
-  for(let i=curPoint+1;i<totalPoints;i++)ptTarget[i]=0;
+  if(curPoint===-1 && dir>0){
+    curPoint=0;
+  } else {
+    // dim previously active point
+    if(curPoint>=0) ptTarget[curPoint]=0.35;
+    curPoint=Math.max(0,Math.min(C.pts.length-1,curPoint+dir));
+  }
+  // reveal and highlight active point
+  ptTarget[curPoint]=1.0;
+  // All points stay visible — curPoint just controls which is highlighted as active
   updateNavUI();
   scrollPrompterTo(curPoint);
   updateFacePrompter();
 }
-function resetPoints(){curPoint=0;ptOpacity.fill(0);ptTarget.fill(0);ptTarget[0]=1;updateNavUI();}
+function resetPoints(){curPoint=-1;ptOpacity.fill(0);ptTarget.fill(0);updateNavUI();updateFacePrompter();}
 function buildStepPills(){
   const pills=document.getElementById('stepPills');pills.innerHTML='';
   for(let i=0;i<totalPoints;i++){
-    const d=document.createElement('div');d.className='sp'+(i===0?' on':'');d.id='sp'+i;pills.appendChild(d);
+    const d=document.createElement('div');d.className='sp';d.id='sp'+i;pills.appendChild(d);
   }
 }
 function updateNavUI(){
@@ -2347,7 +2377,7 @@ function updateNavUI(){
     const sp=document.getElementById('sp'+i);
     if(sp)sp.className='sp'+(i===curPoint?' on':i<curPoint?' done':'');
   }
-  document.getElementById('prevBtn').disabled=curPoint===0;
+  document.getElementById('prevBtn').disabled=curPoint<=0;
   document.getElementById('nextBtn').disabled=curPoint===C.pts.length-1;
 }
 
@@ -2585,57 +2615,41 @@ function drawFrameFilm(ctx,W,H,col){
 function drawProgressArc(ctx,W,H,acc){
   if(!recording) return;
   if(frameStyle==='film') return;
-  // check if user wants timer shown (tTimer toggle)
   const timerEl = document.getElementById('tTimer');
   if(timerEl && !timerEl.checked) return;
 
-  const elapsed   = (Date.now()-recStart-recPausedTotal)/1000;
-  const totalDur  = inputMode==='upload' ? uploadedVideoDuration : 60;
-  const pct       = Math.min(1, elapsed/totalDur);
-  const remain    = Math.max(0, totalDur - Math.floor(elapsed));
-  // color: green → amber → red
-  const arcCol    = remain<=10 ? '#ef4444' : remain<=20 ? '#F59E0B' : '#FF6B00';
-
-  // Arc at BOTTOM of face area — frames lower face, doesn't cover eyes
-  const cx = W/2;
-  const cy = H;           // bottom edge of face area
-  const r  = W * 0.44;   // radius — creates a nice arc framing from below
+  const elapsed  = (Date.now()-recStart-recPausedTotal)/1000;
+  const totalDur = inputMode==='upload' ? uploadedVideoDuration : 60;
+  const pct      = Math.min(1, elapsed/totalDur);
+  const remain   = Math.max(0, totalDur - Math.floor(elapsed));
+  const col      = remain<=10 ? '#ef4444' : remain<=20 ? '#F59E0B' : '#FF6B00';
 
   ctx.save();
 
-  // Track (full half-circle from left to right along bottom)
-  ctx.globalAlpha = 0.18;
-  ctx.strokeStyle = '#FF6B00';
-  ctx.lineWidth   = 7;
-  ctx.lineCap     = 'round';
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, Math.PI, 0, false);  // top half arc
-  ctx.stroke();
+  // ── Thin progress bar along very bottom edge of face area ──
+  const barY = H - 8;
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#333';
+  ctx.fillRect(0, barY, W, 8);
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = col;
+  ctx.fillRect(0, barY, W*pct, 8);
 
-  // Fill arc (progresses left→right)
-  ctx.globalAlpha = 0.88;
-  ctx.strokeStyle = arcCol;
-  ctx.lineWidth   = 7;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, Math.PI, Math.PI + pct*Math.PI, false);
-  ctx.stroke();
-
-  // Time badge just above arc center
-  const bW=80,bH=32,bX=cx-bW/2,bY=H-r-bH-8;
-  rr(ctx,bX,bY,bW,bH,16);
-  ctx.globalAlpha=0.85;
-  ctx.fillStyle=remain<=10?hexAlpha('#ef4444',.4):hexAlpha('#FF6B00',.25);
+  // ── Time badge: top-right corner only ──
+  const bW=76,bH=36,bX=W-bW-18,bY2=18;
+  rr(ctx,bX,bY2,bW,bH,10);
+  ctx.globalAlpha=0.82;
+  ctx.fillStyle=remain<=10?hexAlpha('#ef4444',.5):hexAlpha('#000',.6);
   ctx.fill();
-  ctx.strokeStyle=arcCol;ctx.lineWidth=1.5;ctx.stroke();
-  ctx.fillStyle=arcCol;
+  ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.globalAlpha=1;
+  ctx.fillStyle=col;
   ctx.font='bold 20px sans-serif';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(remain+'s', cx, bY+bH/2);
+  ctx.fillText(remain+'s',bX+bW/2,bY2+bH/2);
 
   ctx.restore();
 }
-
-
 function setMode(mode){
   inputMode=mode;
   const tc=document.getElementById('tabCamera');
@@ -2714,6 +2728,7 @@ function startRec(){
   mediaRec.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
   mediaRec.onstop=finishRec;
   mediaRec.start(200);
+  for(var _i=0;_i<totalPoints;_i++) ptTarget[_i]=1;
   recording=true;recStart=Date.now();
   timerInt=setInterval(updateTimer,1000);
   document.getElementById('recDot').style.display='block';
